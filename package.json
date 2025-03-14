@@ -20,14 +20,21 @@
     "clean": "rm -rf dist",
     "clean:tests": "node tests/cleanup.js",
     "start": "node dist/index.js",
-    "test": "node tests/conversation.js",
+    "test": "node tests/run-all-tests.js",
+    "test:consolidated": "node tests/consolidated-test.js",
+    "test:conversation": "node tests/conversation.js",
     "test:duckdb": "node tests/duckdb.js",
     "test:simple": "node tests/simple.js",
     "test:setup": "node tests/manual-setup.js",
     "test:mcp": "node tests/mcp.js",
     "test:list-tables": "node tests/list-tables.js",
     "test:minimal": "node tests/minimal-list-tables.js",
-    "test:resources": "node tests/test-resources.js"
+    "test:resources": "node tests/test-resources.js",
+    "test:resilience": "node tests/connection-resilience.js",
+    "test:resources-resilience": "node tests/resources-resilience.js",
+    "test:claude-desktop": "node tests/claude-desktop-error.js",
+    "test:tailpipe": "node tests/claude-desktop-tailpipe.js",
+    "test:inspect-tools": "node tests/inspect-tools.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
