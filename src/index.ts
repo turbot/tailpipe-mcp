@@ -125,6 +125,9 @@ process.on('SIGINT', async () => {
 
 // Start the server
 async function runServer() {
+  // Record server start time for status resource
+  process.env.SERVER_START_TIME = new Date().toISOString();
+  
   const transport = new StdioServerTransport();
   await server.connect(transport);
   

@@ -3,6 +3,7 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { DatabaseService } from "../services/database.js";
 import { handleSchemaResource } from "./schema.js";
 import { handleTableResource } from "./table.js";
+import { handleStatusResource } from "./status.js";
 
 export function setupResourceHandlers(server: Server, db: DatabaseService) {
   // Add resources/list handler
@@ -24,12 +25,25 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
         );
         
         // Format schemas as resources
-        const resources = schemas.map(schema => ({
-          uri: `postgresql://schema/${schema.name}`,
-          name: schema.name,
-          type: "Schema",
-          description: `The ${schema.name} schema`
-        }));
+        const resources = [
+          // Add status resource
+          {
+            uri: "tailpipe://status",
+            name: "status",
+            type: "Status",
+            description: "Server status information"
+          }
+        ];
+        
+        // Add schema resources
+        resources.push(
+          ...schemas.map(schema => ({
+            uri: `postgresql://schema/${schema.name}`,
+            name: schema.name,
+            type: "Schema",
+            description: `The ${schema.name} schema`
+          }))
+        );
         
         // For Claude Desktop tailpipe, ensure we have at least the main schema
         if (isClaudeDesktopTailpipe && !resources.some(r => r.name === 'main')) {
@@ -55,6 +69,13 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
         // Attempt to get at least the main schema as a fallback when DB query fails
         // This ensures clients always have at least one resource to work with
         const fallbackResources = [
+          // Always include status resource even if database is unavailable
+          {
+            uri: "tailpipe://status",
+            name: "status",
+            type: "Status",
+            description: "Server status information"
+          },
           {
             uri: "postgresql://schema/main",
             name: "main",
@@ -86,6 +107,13 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
       // Provide at least a default resource rather than an empty list
       return { 
         resources: [
+          // Always include status resource
+          {
+            uri: "tailpipe://status",
+            name: "status",
+            type: "Status",
+            description: "Server status information"
+          },
           {
             uri: "postgresql://schema/main",
             name: "main",
@@ -101,11 +129,12 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
 
     try {
       // Try each handler in sequence
-      const result = await handleSchemaResource(uri, db) 
+      const result = await handleStatusResource(uri, db)
+        || await handleSchemaResource(uri, db) 
         || await handleTableResource(uri, db);
 
       if (!result) {
-        throw new Error(`Invalid resource URI: ${uri}. Expected format: postgresql://schema/{name} or postgresql://table/{schema}/{name}`);
+        throw new Error(`Invalid resource URI: ${uri}. Expected format: tailpipe://status, postgresql://schema/{name}, or postgresql://table/{schema}/{name}`);
       }
 
       return result;
