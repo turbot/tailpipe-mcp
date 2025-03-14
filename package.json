@@ -1,0 +1,38 @@
+{
+  "name": "@turbot/tailpipe-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for interacting with Tailpipe.",
+  "license": "Apache-2.0",
+  "author": "Turbot, Inc. (https://turbot.com)",
+  "homepage": "https://turbot.com",
+  "bugs": "https://github.com/turbot/tailpipe-mcp/issues",
+  "type": "module",
+  "bin": {
+    "mcp-server-tailpipe": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/index.js",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "clean:tests": "node tests/cleanup.js",
+    "start": "node dist/index.js",
+    "test": "node tests/conversation.js",
+    "test:duckdb": "node tests/duckdb.js",
+    "test:simple": "node tests/simple.js",
+    "test:setup": "node tests/manual-setup.js",
+    "test:mcp": "node tests/mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@types/node": "^20.11.5",
+    "duckdb": "^1.2.0"
+  },
+  "devDependencies": {
+    "shx": "^0.3.4",
+    "typescript": "^5.6.2"
+  }
+}
