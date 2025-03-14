@@ -21,6 +21,10 @@ export const RECONNECT_TOOL = {
 async function getDatabasePathFromTailpipe(): Promise<string> {
   try {
     console.error('Getting new database path from Tailpipe CLI...');
+    if (process.env.DEBUG_TAILPIPE === 'true') {
+      console.error('PATH environment variable:', process.env.PATH);
+      console.error('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
+    }
     const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
     
     try {
@@ -76,35 +80,22 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
         };
       }
     } else {
-      // Get original source of database path
-      // Check if environment variable PATH includes our test directory for the mock tailpipe
-      const isMockTest = process.env.PATH && process.env.PATH.includes('.tmp-test');
+      // Check how the original database path was obtained
+      const wasProvidedAsArg = process.argv.length > 2;
+      const dbSourceType = (db as any).sourceType || (wasProvidedAsArg ? 'cli-arg' : 'tailpipe');
       
-      if (isMockTest && process.env.MOCK_TEST === 'true') {
-        // If running in test mode with mock tailpipe, use the tailpipe CLI
-        console.error('Mock test environment detected, using Tailpipe CLI for reconnection');
-        try {
-          // Get a fresh path from Tailpipe CLI (which is mocked in test)
-          newDatabasePath = await getDatabasePathFromTailpipe();
-          source = 'mock Tailpipe CLI connection';
-        } catch (error) {
-          return {
-            content: [{ 
-              type: "text", 
-              text: `Error: ${error instanceof Error ? error.message : String(error)}` 
-            }],
-            isError: true
-          };
-        }
-      } else if (process.argv.length > 2) {
-        // Reuse the original path from command line
+      if (dbSourceType === 'cli-arg' && wasProvidedAsArg) {
+        // If the original path was from command line, reuse it
         newDatabasePath = resolve(process.argv[2]);
         source = 'original command line argument';
       } else {
+        // Either it was originally from tailpipe or we don't know the source
+        // so use tailpipe CLI to get a fresh connection
+        console.error('Using Tailpipe CLI for reconnection');
         try {
           // Get a fresh path from Tailpipe CLI
           newDatabasePath = await getDatabasePathFromTailpipe();
-          source = 'new Tailpipe CLI connection';
+          source = 'tailpipe CLI connection';
         } catch (error) {
           return {
             content: [{ 
@@ -117,8 +108,10 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
       }
     }
     
-    // Update the database path in the DatabaseService
+    // Update the database path and source type in the DatabaseService
     db.databasePath = newDatabasePath;
+    // Update source type based on how we got the new path
+    db.sourceType = source.includes('tailpipe') ? 'tailpipe' : 'cli-arg';
     
     // Try to initialize the database connection
     try {

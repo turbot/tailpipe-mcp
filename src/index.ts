@@ -78,7 +78,9 @@ async function getDatabasePath(): Promise<string> {
 let db: DatabaseService;
 try {
   const databasePath = await getDatabasePath();
-  db = new DatabaseService(databasePath);
+  // Track how the path was obtained so reconnect can use the same method
+  const sourceType = providedDatabasePath ? 'cli-arg' : 'tailpipe';
+  db = new DatabaseService(databasePath, sourceType);
 } catch (error: unknown) {
   if (error instanceof Error) {
     console.error("Failed to initialize database connection:", error.message);

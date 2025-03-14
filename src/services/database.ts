@@ -7,10 +7,12 @@ export class DatabaseService {
   private initPromise: Promise<void>;
   private ready: boolean = false;
   public databasePath: string; // Changed to public to allow reconnection
+  public sourceType: string; // Track how database path was obtained (cli-arg or tailpipe)
   private initAttempted: boolean = false;
 
-  constructor(databasePath: string) {
+  constructor(databasePath: string, sourceType: string = 'cli-arg') {
     this.databasePath = databasePath;
+    this.sourceType = sourceType;
     this.initPromise = this.initializeDatabase().catch(error => {
       console.error(`Database initialization failed: ${error instanceof Error ? error.message : String(error)}`);
       this.ready = false;
