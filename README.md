@@ -34,9 +34,10 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
   - Execute SQL queries against the connected Tailpipe database
   - Input: `sql` (string): The SQL query to execute
   
-- **listTables**
+- **list_tables**
   - List available tables in the database
-  - No input required, returns all tables
+  - Optional input: `schema` (string): Filter tables by schema name
+  - Optional input: `filter` (string): Filter tables by name pattern
   
 - **inspectDatabase**
   - List all schemas in the database

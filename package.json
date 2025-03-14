@@ -24,7 +24,9 @@
     "test:duckdb": "node tests/duckdb.js",
     "test:simple": "node tests/simple.js",
     "test:setup": "node tests/manual-setup.js",
-    "test:mcp": "node tests/mcp.js"
+    "test:mcp": "node tests/mcp.js",
+    "test:list-tables": "node tests/list-tables.js",
+    "test:minimal": "node tests/minimal-list-tables.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",

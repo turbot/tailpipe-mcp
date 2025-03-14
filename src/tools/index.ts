@@ -33,6 +33,8 @@ export function setupTools(server: Server, db: DatabaseService) {
   // Register unified tool call handler
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    
+    console.error(`Tool call received: ${name} with args: ${JSON.stringify(args)}`);
 
     switch (name) {
       case QUERY_TOOL.name:
@@ -51,6 +53,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         return handleInspectTableTool(db, args as { name: string; schema?: string });
 
       case LIST_TABLES_TOOL.name:
+        console.log(`Executing listTables tool with args: ${JSON.stringify(args)}`);
         return handleListTablesTool(db, args as { schema?: string; filter?: string });
 
       default:

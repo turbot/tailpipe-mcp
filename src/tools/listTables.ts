@@ -2,46 +2,64 @@ import { DatabaseService } from "../services/database.js";
 
 export const LIST_TABLES_TOOL = {
   name: "list_tables",
-  description: "List all unique tables in the database, excluding public and information_schema schemas",
+  description: "List available tables in the database",
   inputSchema: {
     type: "object",
     properties: {
       filter: {
         type: "string",
-        description: "Optional ILIKE pattern to filter table names (e.g. '%ec2%')",
+        description: "Optional pattern to filter table names (e.g. '%ec2%')",
       },
       schema: {
         type: "string",
-        description: "Optional schema name to target table results",
+        description: "Optional schema name to filter tables by schema",
       },
     },
   },
 } as const;
 
 export async function handleListTablesTool(db: DatabaseService, args: { schema?: string; filter?: string }) {
-  const rows = await db.executeQuery(`
-    WITH ordered_tables AS (
-      SELECT DISTINCT ON (t.table_name)
-        t.table_schema as schema,
-        t.table_name as name,
-        pg_catalog.obj_description(format('%I.%I', t.table_schema, t.table_name)::regclass::oid, 'pg_class') as description,
-        array_position(current_schemas(false), t.table_schema) as schema_order
-      FROM information_schema.tables t
-      WHERE t.table_schema NOT IN ('information_schema', 'pg_catalog', 'public')
-        AND ($1::text IS NULL OR t.table_schema = $1)
-        AND ($2::text IS NULL OR t.table_name ILIKE $2)
-      ORDER BY t.table_name, schema_order NULLS LAST
-    )
-    SELECT 
-      schema,
-      name,
-      description
-    FROM ordered_tables
-    ORDER BY name;
-  `, [args.schema || null, args.filter || null]);
+  try {
+    let query = `
+      SELECT 
+        table_schema as schema,
+        table_name as name
+      FROM information_schema.tables 
+      WHERE table_schema NOT IN ('information_schema')
+    `;
 
-  return {
-    content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
-    isError: false,
-  };
+    // Add filter conditions based on args
+    const params = [];
+    
+    // Add schema filter if provided
+    if (args.schema) {
+      query += ` AND table_schema = ?`;
+      params.push(args.schema);
+    }
+    
+    // Add name filter if provided
+    if (args.filter) {
+      query += ` AND table_name LIKE ?`;
+      params.push(args.filter);
+    }
+    
+    // Add ordering
+    query += ` ORDER BY table_schema, table_name`;
+    
+    const rows = await db.executeQuery(query, params);
+    
+    // Return formatted result
+    return {
+      content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
+      isError: false
+    };
+  } catch (error) {
+    // Handle any errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return {
+      content: [{ type: "text", text: `Error listing tables: ${errorMessage}` }],
+      isError: true
+    };
+  }
+
 } 
