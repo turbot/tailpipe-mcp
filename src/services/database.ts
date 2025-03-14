@@ -1,5 +1,48 @@
 import { SchemaInfo, TableInfo } from "../types/index.js";
 import type { Database as DuckDBDatabase, Connection as DuckDBConnection } from "duckdb";
+import { execSync } from "child_process";
+import { resolve } from "path";
+import { existsSync } from "fs";
+
+/**
+ * Get database path using Tailpipe CLI
+ * @returns The resolved database path from Tailpipe CLI
+ */
+export async function getDatabasePathFromTailpipe(): Promise<string> {
+  try {
+    console.error('Getting database path from Tailpipe CLI...');
+    if (process.env.DEBUG_TAILPIPE === 'true') {
+      console.error('PATH environment variable:', process.env.PATH);
+      console.error('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
+    }
+    const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
+    
+    try {
+      const result = JSON.parse(output);
+      
+      if (result?.database_filepath) {
+        const resolvedPath = resolve(result.database_filepath);
+        console.error(`Using Tailpipe database path: ${resolvedPath}`);
+        
+        if (!existsSync(resolvedPath)) {
+          throw new Error(`Tailpipe database file does not exist: ${resolvedPath}`);
+        }
+        
+        return resolvedPath;
+      } else {
+        console.error('Tailpipe connect output JSON:', JSON.stringify(result));
+        throw new Error('Tailpipe connect output missing database_filepath field');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
+      console.error('Tailpipe output:', output);
+      throw new Error('Failed to parse Tailpipe CLI output');
+    }
+  } catch (error) {
+    console.error('Failed to run Tailpipe CLI:', error instanceof Error ? error.message : String(error));
+    throw new Error('Failed to get database path from Tailpipe CLI');
+  }
+}
 
 export class DatabaseService {
   private db: DuckDBDatabase | null = null;
@@ -68,7 +111,9 @@ export class DatabaseService {
       }
       
       // Create a new database connection in read-only mode
-      this.db = new Database(this.databasePath, { access_mode: 'READ_ONLY' });
+      this.db = new Database(this.databasePath, { 
+        access_mode: 'READ_ONLY'
+      });
       this.connection = this.db.connect();
       
       // Run a test query to make sure the connection works
@@ -222,12 +267,12 @@ export class DatabaseService {
         }
       });
       
-      // Set a timeout to detect if the query is hanging
+      // Set a timeout to detect if the query is hanging (using 2500ms instead of 1000ms)
       setTimeout(() => {
         if (this.connection) {
-          console.error(`Connection test query is taking too long (>1000ms), may be hung`);
+          console.error(`Connection test query is taking too long (>2500ms), may be hung`);
         }
-      }, 1000);
+      }, 2500);
     });
   }
 

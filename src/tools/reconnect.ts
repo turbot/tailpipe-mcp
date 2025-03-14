@@ -1,5 +1,4 @@
-import { DatabaseService } from "../services/database.js";
-import { execSync } from "child_process";
+import { DatabaseService, getDatabasePathFromTailpipe } from "../services/database.js";
 import { resolve } from "path";
 import { existsSync } from "fs";
 
@@ -17,42 +16,7 @@ export const RECONNECT_TOOL = {
   }
 } as const;
 
-// Get database path using Tailpipe CLI
-async function getDatabasePathFromTailpipe(): Promise<string> {
-  try {
-    console.error('Getting new database path from Tailpipe CLI...');
-    if (process.env.DEBUG_TAILPIPE === 'true') {
-      console.error('PATH environment variable:', process.env.PATH);
-      console.error('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
-    }
-    const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
-    
-    try {
-      const result = JSON.parse(output);
-      
-      if (result?.database_filepath) {
-        const resolvedPath = resolve(result.database_filepath);
-        console.error(`Using Tailpipe database path: ${resolvedPath}`);
-        
-        if (!existsSync(resolvedPath)) {
-          throw new Error(`Tailpipe database file does not exist: ${resolvedPath}`);
-        }
-        
-        return resolvedPath;
-      } else {
-        console.error('Tailpipe connect output JSON:', JSON.stringify(result));
-        throw new Error('Tailpipe connect output missing database_filepath field');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
-      console.error('Tailpipe output:', output);
-      throw new Error('Failed to parse Tailpipe CLI output');
-    }
-  } catch (error) {
-    console.error('Failed to run Tailpipe CLI:', error instanceof Error ? error.message : String(error));
-    throw new Error('Failed to get database path from Tailpipe CLI');
-  }
-}
+// Now using the shared function from database.ts
 
 export async function handleReconnectTool(db: DatabaseService, args: { database_path?: string }) {
   try {

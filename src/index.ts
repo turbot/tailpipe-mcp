@@ -2,14 +2,13 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { DatabaseService } from "./services/database.js";
+import { DatabaseService, getDatabasePathFromTailpipe } from "./services/database.js";
 import { setupTools } from "./tools/index.js";
 import { setupPrompts } from "./prompts/index.js";
 import { setupResourceTemplatesList } from "./resourceTemplates/list.js";
 import { setupResourceHandlers } from "./resources/index.js";
 import { existsSync } from "fs";
 import { resolve } from "path";
-import { execSync } from "child_process";
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -36,36 +35,12 @@ async function getDatabasePath(): Promise<string> {
     process.exit(1);
   }
   
-  // Otherwise, try to use the Tailpipe CLI to get the database path
+  // Otherwise, use the shared function to get the database path from Tailpipe CLI
   try {
     console.error('No database path provided, attempting to use Tailpipe CLI...');
-    const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
-    
-    try {
-      const result = JSON.parse(output);
-      
-      if (result?.database_filepath) {
-        const resolvedPath = resolve(result.database_filepath);
-        console.error(`Using Tailpipe database path: ${resolvedPath}`);
-        
-        if (!existsSync(resolvedPath)) {
-          console.error('Tailpipe database file does not exist:', resolvedPath);
-          process.exit(1);
-        }
-        
-        return resolvedPath;
-      } else {
-        console.error('Tailpipe connect output JSON:', JSON.stringify(result));
-        throw new Error('Tailpipe connect output missing database_filepath field');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
-      console.error('Tailpipe output:', output);
-      process.exit(1);
-    }
-  } catch (cliError) {
-    console.error('Failed to run Tailpipe CLI. Is it installed?');
-    console.error(cliError instanceof Error ? cliError.message : String(cliError));
+    return await getDatabasePathFromTailpipe();
+  } catch (error) {
+    console.error('Failed to get database path from Tailpipe CLI:', error instanceof Error ? error.message : String(error));
     console.error('Please install Tailpipe CLI or provide a database path directly.');
     process.exit(1);
   }
