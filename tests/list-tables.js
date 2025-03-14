@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import duckdb from 'duckdb';
 import { mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
+import { createInterface } from 'readline';
 
 // Create and run a test for the listTables tool
 async function testListTables() {
@@ -25,20 +26,26 @@ async function testListTables() {
       stdio: ['pipe', 'pipe', 'pipe']
     });
     
-    // Handle server output/errors
-    mcpProcess.stdout.on('data', (data) => {
-      const response = data.toString().trim();
-      console.log(`📤 MCP response: ${response}`);
-      
-      try {
-        // Try to parse and prettify the JSON response
-        const parsed = JSON.parse(response);
-        if (parsed.result && parsed.result.content) {
-          console.log('📋 Response content:');
-          console.log(parsed.result.content[0].text);
+    // Use readline for proper line-by-line processing
+    const rl = createInterface({
+      input: mcpProcess.stdout,
+      terminal: false
+    });
+    
+    rl.on('line', (line) => {
+      if (line.trim()) {
+        console.log(`📤 MCP response: ${line}`);
+        
+        try {
+          // Try to parse and prettify the JSON response
+          const parsed = JSON.parse(line);
+          if (parsed.result && parsed.result.content) {
+            console.log('📋 Response content:');
+            console.log(parsed.result.content[0].text);
+          }
+        } catch (e) {
+          // Not JSON or other issue, just log the raw response
         }
-      } catch (e) {
-        // Not JSON or other issue, just log the raw response
       }
     });
     
@@ -70,6 +77,8 @@ async function testListTables() {
     // Test 1: List all tables
     console.log('📝 Test 1: List all tables');
     const listAllRequest = { 
+      jsonrpc: "2.0",
+      id: "request-1",
       method: 'tools/call', 
       params: { 
         name: 'list_tables', 
@@ -85,6 +94,8 @@ async function testListTables() {
     // Test 2: List tables in specific schema
     console.log('\n📝 Test 2: List tables in aws schema');
     const listSchemaRequest = { 
+      jsonrpc: "2.0",
+      id: "request-2",
       method: 'tools/call', 
       params: { 
         name: 'list_tables', 
@@ -102,6 +113,8 @@ async function testListTables() {
     // Test 3: List tables with filter
     console.log('\n📝 Test 3: List tables with s3 in the name');
     const listFilterRequest = { 
+      jsonrpc: "2.0",
+      id: "request-3",
       method: 'tools/call', 
       params: { 
         name: 'list_tables', 

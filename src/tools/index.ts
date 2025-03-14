@@ -53,7 +53,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         return handleInspectTableTool(db, args as { name: string; schema?: string });
 
       case LIST_TABLES_TOOL.name:
-        console.log(`Executing listTables tool with args: ${JSON.stringify(args)}`);
+        console.error(`Executing list_tables tool with args: ${JSON.stringify(args)}`);
         return handleListTablesTool(db, args as { schema?: string; filter?: string });
 
       default:
