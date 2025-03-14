@@ -34,7 +34,8 @@
     "test:resources-resilience": "node tests/resources-resilience.js",
     "test:claude-desktop": "node tests/claude-desktop-error.js",
     "test:tailpipe": "node tests/claude-desktop-tailpipe.js",
-    "test:inspect-tools": "node tests/inspect-tools.js"
+    "test:inspect-tools": "node tests/inspect-tools.js",
+    "test:status": "node tests/test-status-resource.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",

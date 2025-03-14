@@ -16,13 +16,13 @@ export async function handleStatusResource(uri: string, db: DatabaseService): Pr
   try {
     // Using 'tailpipe --version' as requested
     const output = execSync('tailpipe --version', { encoding: 'utf-8' });
-    // Remove any whitespace and "tailpipe" prefix if present
-    tailpipeVersion = output.trim().replace(/^tailpipe\s+/i, '');
-    
-    // Validate it looks like a version number
-    if (!tailpipeVersion || !/^\d+\.\d+/.test(tailpipeVersion)) {
-      console.error('Unexpected tailpipe version output:', output);
-      tailpipeVersion = `Unexpected format: ${output.trim()}`;
+    // Use a regex to extract the version number directly
+    const versionMatch = output.trim().match(/v?(\d+\.\d+(\.\d+)?)/i);
+    if (versionMatch && versionMatch[1]) {
+      tailpipeVersion = versionMatch[1];
+    } else {
+      console.error('Unexpected tailpipe version output format:', output);
+      tailpipeVersion = output.trim();
     }
   } catch (error) {
     // Tailpipe CLI is not installed or failed to run
