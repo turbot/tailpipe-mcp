@@ -85,6 +85,22 @@ Add the following configuration to the "mcpServers" section of your `claude_desk
       "command": "npx",
       "args": [
         "-y",
+        "github:turbot/tailpipe-mcp"
+      ]
+    }
+  }
+}
+```
+
+This will automatically use the Tailpipe CLI to discover your database. If you want to specify a database file path explicitly, you can add it as an additional argument:
+
+```json
+{
+  "mcpServers": {
+    "tailpipe": {
+      "command": "npx",
+      "args": [
+        "-y",
         "github:turbot/tailpipe-mcp",
         "/path/to/your/tailpipe.db"
       ]
@@ -93,11 +109,23 @@ Add the following configuration to the "mcpServers" section of your `claude_desk
 }
 ```
 
-You can use any Tailpipe database file path above. The database file must exist before starting the server.
-
 ### Cursor
 
 To use with Cursor, add this to your `~/.cursor/config.json`:
+
+```json
+{
+  "mcps": {
+    "tailpipe": {
+      "name": "Tailpipe",
+      "description": "Query Tailpipe data",
+      "server": "github:turbot/tailpipe-mcp"
+    }
+  }
+}
+```
+
+If you prefer to specify the database path explicitly instead of using the Tailpipe CLI:
 
 ```json
 {
@@ -200,10 +228,19 @@ npm run test:setup
 npm run clean:tests
 ```
 
-6. To run the server with your own database:
+6. To run the server:
+
+The MCP server can be run in two ways:
+
 ```sh
+# Automatic database discovery (using Tailpipe CLI)
+node dist/index.js
+
+# Or with explicit database path
 node dist/index.js /path/to/your/tailpipe.db
 ```
+
+When run without arguments, the server will use the Tailpipe CLI to detect your database (`tailpipe connect --output json`). This requires the Tailpipe CLI to be installed and configured.
 
 7. To use your local development version with Claude Desktop, update your `claude_desktop_config.json`:
 ```json
@@ -241,6 +278,9 @@ Replace `/path/to/your/workspace` with the absolute path to your local developme
 The MCP Inspector is helpful for testing and debugging. To test your local development version:
 
 ```sh
+npx @modelcontextprotocol/inspector dist/index.js
+
+# Or with explicit database path:
 npx @modelcontextprotocol/inspector dist/index.js /path/to/your/tailpipe.db
 ```
 

@@ -9,26 +9,74 @@ import { setupResourceTemplatesList } from "./resourceTemplates/list.js";
 import { setupResourceHandlers } from "./resources/index.js";
 import { existsSync } from "fs";
 import { resolve } from "path";
-
-const DEFAULT_DATABASE_PATH = "./tailpipe.db";
+import { execSync } from "child_process";
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-const databasePath = args[0] || DEFAULT_DATABASE_PATH;
+const providedDatabasePath = args[0];
 
-// Validate database path
-const resolvedPath = resolve(databasePath);
-
-if (!existsSync(resolvedPath)) {
-  console.error('Database file does not exist:', resolvedPath);
-  console.error('Please provide a valid DuckDB database file path');
-  process.exit(1);
+// Get the database path, either from command line or from Tailpipe CLI
+async function getDatabasePath(): Promise<string> {
+  // If a database path was provided directly, use that
+  if (providedDatabasePath) {
+    const resolvedPath = resolve(providedDatabasePath);
+    if (!existsSync(resolvedPath)) {
+      console.error('Database file does not exist:', resolvedPath);
+      console.error('Please provide a valid DuckDB database file path');
+      process.exit(1);
+    }
+    console.error(`Using provided database path: ${resolvedPath}`);
+    return resolvedPath;
+  }
+  
+  // Skip Tailpipe CLI if environment variable is set (for testing purposes)
+  if (process.env.SKIP_TAILPIPE_CLI === 'true') {
+    console.error('SKIP_TAILPIPE_CLI is set, not attempting to use Tailpipe CLI');
+    console.error('Please provide a database path directly when SKIP_TAILPIPE_CLI is set');
+    process.exit(1);
+  }
+  
+  // Otherwise, try to use the Tailpipe CLI to get the database path
+  try {
+    console.error('No database path provided, attempting to use Tailpipe CLI...');
+    const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
+    
+    try {
+      const result = JSON.parse(output);
+      if (result && result.database_path) {
+        const resolvedPath = resolve(result.database_path);
+        console.error(`Using Tailpipe database path: ${resolvedPath}`);
+        
+        if (!existsSync(resolvedPath)) {
+          console.error('Tailpipe database file does not exist:', resolvedPath);
+          process.exit(1);
+        }
+        
+        return resolvedPath;
+      } else {
+        throw new Error('Tailpipe connect output missing database_path field');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
+      console.error('Tailpipe output:', output);
+      process.exit(1);
+    }
+  } catch (cliError) {
+    console.error('Failed to run Tailpipe CLI. Is it installed?');
+    console.error(cliError instanceof Error ? cliError.message : String(cliError));
+    console.error('Please install Tailpipe CLI or provide a database path directly.');
+    process.exit(1);
+  }
+  
+  // This line should never be reached due to the previous error handling
+  return '';
 }
 
 // Initialize database service
 let db: DatabaseService;
 try {
-  db = new DatabaseService(resolvedPath);
+  const databasePath = await getDatabasePath();
+  db = new DatabaseService(databasePath);
 } catch (error: unknown) {
   if (error instanceof Error) {
     console.error("Failed to initialize database connection:", error.message);
@@ -82,7 +130,15 @@ async function runServer() {
   console.error("MCP server started successfully"); // Use stderr so it doesn't interfere with MCP protocol
 }
 
-runServer().catch((error) => {
-  console.error("Server error:", error);
-  db.close().finally(() => process.exit(1));
-});
+// Immediately invoked function to allow for top-level await
+(async () => {
+  try {
+    await runServer();
+  } catch (error) {
+    console.error("Server error:", error instanceof Error ? error.message : String(error));
+    await db.close().catch(e => {
+      console.error("Error closing database:", e instanceof Error ? e.message : String(e));
+    });
+    process.exit(1);
+  }
+})();

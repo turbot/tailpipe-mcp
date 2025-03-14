@@ -141,8 +141,10 @@ function queryAndLog(connection, sql, label) {
 async function testMCPServer() {
   console.log('\n🚀 Starting MCP server...');
   
+  // Pass the database path directly to ensure test predictability
   const serverProcess = spawn('node', ['dist/index.js', DB_PATH], {
-    stdio: ['pipe', 'pipe', 'pipe']
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: {...process.env, SKIP_TAILPIPE_CLI: 'true'} // Add this for testing to skip CLI check
   });
   
   // Create readline interface for line-by-line processing
