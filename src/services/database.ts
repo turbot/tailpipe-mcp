@@ -4,9 +4,11 @@ import type { Database as DuckDBDatabase, Connection as DuckDBConnection } from 
 export class DatabaseService {
   private db: DuckDBDatabase | null = null;
   private connection: DuckDBConnection | null = null;
+  private initPromise: Promise<void>;
+  private ready: boolean = false;
 
   constructor(databasePath: string) {
-    this.initializeDatabase(databasePath).catch(error => {
+    this.initPromise = this.initializeDatabase(databasePath).catch(error => {
       throw error;
     });
   }
@@ -32,6 +34,15 @@ export class DatabaseService {
       // Create a new database connection
       this.db = new Database(databasePath);
       this.connection = this.db.connect();
+      this.ready = true;
+      
+      // Run a test query to make sure the connection works
+      await new Promise<void>((resolve, reject) => {
+        this.connection!.all('SELECT 1 as test', (err, _) => {
+          if (err) reject(new Error(`Database connection test failed: ${err.message}`));
+          else resolve();
+        });
+      });
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to connect to DuckDB database at ${databasePath}: ${error.message}`);
@@ -41,7 +52,10 @@ export class DatabaseService {
   }
 
   private async ensureConnection() {
-    if (!this.connection) {
+    // Wait for initialization to complete
+    await this.initPromise;
+    
+    if (!this.ready || !this.connection) {
       throw new Error('Database connection not initialized');
     }
   }
@@ -161,6 +175,11 @@ export class DatabaseService {
 
   async close(): Promise<void> {
     try {
+      // Wait for initialization to complete before closing
+      await this.initPromise.catch(() => {
+        // Ignore initialization errors when closing
+      });
+      
       if (this.connection) {
         this.connection.close();
       }
@@ -176,6 +195,7 @@ export class DatabaseService {
       
       this.connection = null;
       this.db = null;
+      this.ready = false;
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error closing database connection:', error.message);

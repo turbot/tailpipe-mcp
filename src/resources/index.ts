@@ -23,7 +23,14 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
       
       return { resources };
     } catch (error) {
-      console.error("Error listing resources:", error);
+      // Log the error but don't fail - return empty resources
+      if (error instanceof Error) {
+        console.error("Error listing resources:", error.message);
+      } else {
+        console.error("Error listing resources:", error);
+      }
+      
+      // Empty resources is better than failing the whole request
       return { resources: [] };
     }
   });
