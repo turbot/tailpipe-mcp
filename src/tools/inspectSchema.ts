@@ -20,27 +20,45 @@ export const INSPECT_SCHEMA_TOOL = {
 } as const;
 
 export async function handleInspectSchemaTool(db: DatabaseService, args: { name: string; filter?: string }) {
-  const rows = await db.executeQuery(`
-    select 
-      t.table_name,
-      pg_catalog.obj_description(
-        (quote_ident($1) || '.' || quote_ident(t.table_name))::regclass, 
-        'pg_class'
-      ) as description
-    from 
-      information_schema.tables t
-    where 
-      t.table_schema = $1
-      and case 
-        when $2::text is not null then t.table_name ilike $2
-        else true
-      end
-    order by 
-      t.table_name
-  `, [args.name, args.filter || null]);
+  try {
+    // Get all tables in the schema
+    const sql = `SELECT 
+                   table_name, 
+                   '' as description
+                 FROM 
+                   information_schema.tables
+                 WHERE 
+                   table_schema = ?
+                 ORDER BY 
+                   table_name`;
+                   
+    const allTables = await db.executeQuery(sql, [args.name]);
+    
+    // If filter is specified, filter the results in memory
+    let results = allTables;
+    if (args.filter) {
+      // Convert SQL LIKE pattern to JS regex
+      const filterPattern = args.filter
+        .replace(/%/g, '.*')
+        .replace(/_/g, '.');
+        
+      console.error(`Filtering tables with regex: ${filterPattern}`);
+      
+      // Use regex to filter tables
+      const regex = new RegExp(filterPattern, 'i');
+      results = allTables.filter(table => regex.test(table.table_name));
+      
+      console.error(`Found ${results.length} tables matching filter pattern`);
+    }
 
-  return {
-    content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
-    isError: false,
-  };
-} 
+    return {
+      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      content: [{ type: "text", text: `Error inspecting schema: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}

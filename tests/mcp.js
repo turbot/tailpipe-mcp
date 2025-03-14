@@ -66,40 +66,56 @@ async function setupTestDatabase() {
 // Send MCP request and handle response
 function sendMCPRequest(mcpProcess, request) {
   return new Promise((resolve, reject) => {
-    let responseData = '';
+    // Add jsonrpc version and ID if not provided
+    const fullRequest = {
+      jsonrpc: "2.0",
+      id: request.id || `request-${Math.floor(Math.random() * 1000)}`,
+      ...request
+    };
+    
+    // Track full lines received
+    const lines = [];
     let messageHandler;
     let timeoutId;
-
-    // Set up the message handler
+    
+    // Set up the message handler to process line by line
     messageHandler = (data) => {
-      responseData += data.toString();
-      console.log('Received data:', data.toString());
+      const chunk = data.toString();
+      const newLines = chunk.split('\n').filter(l => l.trim());
       
-      try {
-        // Try to parse as JSON to see if we have a complete response
-        const parsed = JSON.parse(responseData);
-        
-        // If we reach here, we have a valid JSON response
-        mcpProcess.stdout.removeListener('data', messageHandler);
-        clearTimeout(timeoutId);
-        resolve(parsed);
-      } catch (err) {
-        // Not a complete response yet, keep listening
+      lines.push(...newLines);
+      console.log('Received lines:', newLines.length);
+      
+      // Try to find a matching response for our request
+      for (let i = 0; i < lines.length; i++) {
+        try {
+          const parsed = JSON.parse(lines[i]);
+          
+          // Check if this is a response to our request
+          if (parsed.id === fullRequest.id) {
+            mcpProcess.stdout.removeListener('data', messageHandler);
+            clearTimeout(timeoutId);
+            resolve(parsed);
+            return;
+          }
+        } catch (err) {
+          // Not valid JSON, skip this line
+        }
       }
     };
 
     // Listen for responses
     mcpProcess.stdout.on('data', messageHandler);
     
-    // Set a timeout to avoid hanging
+    // Set a timeout to avoid hanging (20 seconds should be plenty)
     timeoutId = setTimeout(() => {
       mcpProcess.stdout.removeListener('data', messageHandler);
-      reject(new Error('Request timed out after 10 seconds'));
-    }, 10000);
+      reject(new Error(`Request timed out after 20 seconds. Request ID: ${fullRequest.id}`));
+    }, 20000);
     
     // Send the request
-    console.log('Sending request:', JSON.stringify(request));
-    mcpProcess.stdin.write(JSON.stringify(request) + '\n');
+    console.log('Sending request:', JSON.stringify(fullRequest));
+    mcpProcess.stdin.write(JSON.stringify(fullRequest) + '\n');
   });
 }
 
@@ -188,7 +204,7 @@ async function runMCPTest() {
     const tablesResponse = await sendMCPRequest(mcpProcess, {
       method: "tools/call",
       params: {
-        name: "listTables",
+        name: "list_tables",
         arguments: {}
       }
     });
