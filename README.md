@@ -3,47 +3,100 @@
 Enable AI assistants like Claude to explore and query your Tailpipe data! This Model Context Protocol (MCP) server lets AI tools:
 
 - Browse your Tailpipe schemas and tables
+- Understand your data structure and relationships
 - Run SQL queries against your data
-- Get schema information and metadata
+- Provide insights and analysis based on your cloud and SaaS data
 
 Perfect for:
+- Getting AI help analyzing your cloud infrastructure
 - Having AI assist with Tailpipe query development
 - Enabling natural language interactions with your Tailpipe data
 - Exploring and analyzing your data with AI assistance
 
 Connects directly to your local Tailpipe database file, giving you AI access to all your cloud and SaaS data.
 
-## Features
+## Components
+
+### Prompts
+
+- **best_practices**
+  - Best practices for working with Tailpipe data
+  - Provides detailed guidance on:
+    - How to explore available data
+    - When to use specific tables
+    - Query structure and optimization
+    - Response formatting
+    - Performance considerations
 
 ### Tools
 
-The server provides tools for:
-- Browsing schemas and tables
-- Inspecting table structures
-- Running SQL queries
-- Best practices for working with Tailpipe data
+- **query**
+  - Execute SQL queries against the connected Tailpipe database
+  - Input: `sql` (string): The SQL query to execute
+  
+- **listTables**
+  - List available tables in the database
+  - No input required, returns all tables
+  
+- **inspectDatabase**
+  - List all schemas in the database
+  - No input required, returns all schemas
+  
+- **inspectSchema**
+  - List all tables in a schema
+  - Input: `name` (string): The schema name to inspect
+  
+- **inspectTable**
+  - Get detailed information about a table including its columns
+  - Input: `name` (string): The name of the table to inspect
+  - Optional input: `schema` (string): The schema containing the table
+  
+- **clearCache**
+  - Clear any cached database information
+  - No input parameters required
 
 ### Resource Templates
 
 The Tailpipe MCP includes resource templates that define how to interact with different types of resources. Currently supported resource types:
 
-#### Schema
-- Represents a Tailpipe schema
-- Contains tables and their metadata
-
-#### Table
-- Represents a Tailpipe table
-- Contains column definitions and metadata
+- **schema**
+  - Represents a Tailpipe schema
+  - Properties include name and tables
+  
+- **table**
+  - Represents a Tailpipe table
+  - Properties include name, columns, and metadata
 
 Resource templates enable structured access to Tailpipe metadata, making it easier for AI tools to understand and navigate your data.
 
-## Usage
+## Installation
+
+### Claude Desktop
+
+[How to use MCP servers with Claude Desktop →](https://modelcontextprotocol.io/quickstart/user)
+
+Add the following configuration to the "mcpServers" section of your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "tailpipe": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "github:turbot/tailpipe-mcp",
+        "/path/to/your/tailpipe.db"
+      ]
+    }
+  }
+}
+```
+
+You can use any Tailpipe database file path above. The database file must exist before starting the server.
 
 ### Cursor
 
-To use with Cursor:
-
-1. Add this to your `~/.cursor/config.json`:
+To use with Cursor, add this to your `~/.cursor/config.json`:
 
 ```json
 {
@@ -52,74 +105,84 @@ To use with Cursor:
       "name": "Tailpipe",
       "description": "Query Tailpipe data",
       "server": "github:turbot/tailpipe-mcp",
-      "args": ["path/to/your/database.db"]
+      "args": ["/path/to/your/tailpipe.db"]
     }
   }
 }
 ```
 
-You can use any Tailpipe database file path above. The database file must exist before starting the server.
+## Prompting Guide
 
 ### Best Practices
 
 The Tailpipe MCP includes a pre-built `best_practices` prompt. Running it before running your own prompts will teach the LLM how to work most effectively with Tailpipe, including:
 
-- How to explore schemas and tables
-- How to write efficient queries
-- How to write queries that follow Tailpipe conventions
-- Best practices for performance
+- How to explore available data schemas and tables
+- When to use specific tables for different resource types
+- How to write efficient queries that follow Tailpipe conventions
+- Best practices for formatting and presenting results
+
+In Claude Desktop, you can load this prompt through the plug icon in the prompt window.
 
 ### Example Prompts
 
 Each prompt below is designed to work with Tailpipe's table structure, where each resource type (buckets, instances, etc.) has its own table.
 
 ```
-# List all tables in the aws schema
-list tables in aws schema
-
-# Show me the structure of the aws_s3_bucket table
-what columns are in aws_s3_bucket?
-
-# Find unencrypted buckets
-find s3 buckets that don't have encryption enabled
-
-# Complex analysis
-what EC2 instances have public IPs and are in a public subnet?
+List all tables in the aws schema
 ```
 
-The AI will:
+```
+What columns are in the aws_s3_bucket table?
+```
+
+```
+Find S3 buckets that don't have encryption enabled
+```
+
+```
+What EC2 instances have public IPs and are in a public subnet?
+```
+
+Remember to:
+- Ask about specific resource types (e.g., EC2 instances, S3 buckets, IAM users)
+- Be clear about which services or schemas you're interested in
+- Start with simple questions about one resource type
+- Add more complexity or conditions after seeing the initial results
+
+Claude will:
 - Choose the appropriate Tailpipe tables for your request
-- Write and execute efficient SQL queries
-- Format the results in an easy to read way
-- Explain any important aspects of the results
+- Write efficient SQL queries behind the scenes
+- Format the results in a clear, readable way
+- Provide insights and analysis based on your data
 
-## Development
+## Local Development
 
-### Prerequisites
+To set up the project for local development:
 
-- Node.js 18+
-- npm 9+
-
-### Setup
-
-1. Clone the repository:
-```bash
+1. Clone the repository and navigate to the directory:
+```sh
 git clone https://github.com/turbot/tailpipe-mcp.git
 cd tailpipe-mcp
 ```
 
 2. Install dependencies:
-```bash
+```sh
 npm install
 ```
 
 3. Build the project:
-```bash
+```sh
 npm run build
 ```
 
-4. Run tests:
-```bash
+4. For development with auto-recompilation:
+```sh
+npm run watch
+```
+
+5. To test locally:
+```sh
 # Run the main test (conversation with query testing)
 npm test
 
@@ -136,18 +199,29 @@ npm run test:setup
 npm run clean:tests
 ```
 
-5. To run the server locally:
-```bash
-node dist/index.js path/to/your/database.db
-
-# Or use npm script
-npm run start -- path/to/your/database.db
+6. To run the server with your own database:
+```sh
+node dist/index.js /path/to/your/tailpipe.db
 ```
 
-### Cursor Configuration
+7. To use your local development version with Claude Desktop, update your `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "tailpipe": {
+      "command": "node",
+      "args": [
+        "/path/to/your/workspace/dist/index.js",
+        "/path/to/your/tailpipe.db"
+      ]
+    }
+  }
+}
+```
 
-For local development with Cursor, update your `~/.cursor/config.json`:
+Replace `/path/to/your/workspace` with the absolute path to your local development directory. For example, if you cloned the repository to `~/src/tailpipe-mcp`, you would use `~/src/tailpipe-mcp/dist/index.js`.
 
+8. For local development with Cursor, update your `~/.cursor/config.json`:
 ```json
 {
   "mcps": {
@@ -155,13 +229,19 @@ For local development with Cursor, update your `~/.cursor/config.json`:
       "name": "Tailpipe",
       "description": "Query Tailpipe data",
       "server": "~/src/tailpipe-mcp/dist/index.js",
-      "args": ["path/to/your/database.db"]
+      "args": ["/path/to/your/tailpipe.db"]
     }
   }
 }
 ```
 
-Note: Replace the server path with the actual path to your local build. For example, if you cloned the repository to `~/src/tailpipe-mcp`, you would use `~/src/tailpipe-mcp/dist/index.js`.
+## Testing with MCP Inspector
+
+The MCP Inspector is helpful for testing and debugging. To test your local development version:
+
+```sh
+npx @modelcontextprotocol/inspector dist/index.js /path/to/your/tailpipe.db
+```
 
 ## License
 
