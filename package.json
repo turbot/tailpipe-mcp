@@ -26,7 +26,8 @@
     "test:setup": "node tests/manual-setup.js",
     "test:mcp": "node tests/mcp.js",
     "test:list-tables": "node tests/list-tables.js",
-    "test:minimal": "node tests/minimal-list-tables.js"
+    "test:minimal": "node tests/minimal-list-tables.js",
+    "test:resources": "node tests/test-resources.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
