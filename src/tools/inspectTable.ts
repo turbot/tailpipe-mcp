@@ -32,9 +32,7 @@ export async function handleInspectTableTool(db: DatabaseService, args: { name: 
       const sql = `SELECT 
                      column_name,
                      data_type,
-                     is_nullable,
-                     column_default,
-                     '' as description
+                     '' as description -- duckdb doesn't support column comments
                    FROM 
                      information_schema.columns
                    WHERE 
@@ -81,9 +79,7 @@ export async function handleInspectTableTool(db: DatabaseService, args: { name: 
       const columnSql = `SELECT 
                             column_name,
                             data_type,
-                            is_nullable,
-                            column_default,
-                            '' as description
+                            '' as description -- duckdb doesn't support column comments
                           FROM 
                             information_schema.columns
                           WHERE 

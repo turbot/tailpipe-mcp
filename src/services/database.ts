@@ -281,7 +281,7 @@ export class DatabaseService {
       `SELECT 
          table_name,
          'BASE TABLE' as table_type,
-         '' as description
+         '' as description -- duckdb doesn't support column comments
        FROM information_schema.tables 
        WHERE table_schema = ?
        AND table_schema NOT IN ('information_schema')`,
@@ -321,7 +321,7 @@ export class DatabaseService {
       `SELECT 
          column_name,
          data_type,
-         '' as description
+         '' as description -- duckdb doesn't support column comments
        FROM information_schema.columns
        WHERE table_schema = ? AND table_name = ?
        ORDER BY ordinal_position`,

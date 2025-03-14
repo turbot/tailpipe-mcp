@@ -24,7 +24,7 @@ export async function handleInspectSchemaTool(db: DatabaseService, args: { name:
     // Get all tables in the schema
     const sql = `SELECT 
                    table_name, 
-                   '' as description
+                   '' as description -- duckdb doesn't support table comments
                  FROM 
                    information_schema.tables
                  WHERE 
