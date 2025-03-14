@@ -35,7 +35,8 @@
     "test:claude-desktop": "node tests/claude-desktop-error.js",
     "test:tailpipe": "node tests/claude-desktop-tailpipe.js",
     "test:inspect-tools": "node tests/inspect-tools.js",
-    "test:status": "node tests/test-status-resource.js"
+    "test:status": "node tests/test-status-resource.js",
+    "test:reconnect": "node tests/test-reconnect-tool.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",

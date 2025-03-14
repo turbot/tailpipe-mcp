@@ -6,7 +6,7 @@ export class DatabaseService {
   private connection: DuckDBConnection | null = null;
   private initPromise: Promise<void>;
   private ready: boolean = false;
-  private databasePath: string;
+  public databasePath: string; // Changed to public to allow reconnection
   private initAttempted: boolean = false;
 
   constructor(databasePath: string) {
@@ -18,7 +18,8 @@ export class DatabaseService {
     });
   }
 
-  private async initializeDatabase() {
+  // Made public to allow reconnection via reconnect tool
+  public async initializeDatabase() {
     this.initAttempted = true;
     
     try {

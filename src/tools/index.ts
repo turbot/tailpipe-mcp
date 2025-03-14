@@ -7,6 +7,7 @@ import { INSPECT_DATABASE_TOOL, handleInspectDatabaseTool } from './inspectDatab
 import { INSPECT_SCHEMA_TOOL, handleInspectSchemaTool } from './inspectSchema.js';
 import { INSPECT_TABLE_TOOL, handleInspectTableTool } from './inspectTable.js';
 import { LIST_TABLES_TOOL, handleListTablesTool } from './listTables.js';
+import { RECONNECT_TOOL, handleReconnectTool } from './reconnect.js';
 
 export * from './query.js';
 export * from './clearCache.js';
@@ -14,6 +15,7 @@ export * from './inspectDatabase.js';
 export * from './inspectSchema.js';
 export * from './inspectTable.js';
 export * from './listTables.js';
+export * from './reconnect.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -26,6 +28,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         INSPECT_SCHEMA_TOOL,
         INSPECT_TABLE_TOOL,
         CLEAR_CACHE_TOOL,
+        RECONNECT_TOOL,
       ],
     };
   });
@@ -55,6 +58,10 @@ export function setupTools(server: Server, db: DatabaseService) {
       case LIST_TABLES_TOOL.name:
         console.error(`Executing list_tables tool with args: ${JSON.stringify(args)}`);
         return handleListTablesTool(db, args as { schema?: string; filter?: string });
+        
+      case RECONNECT_TOOL.name:
+        console.error(`Executing reconnect tool with args: ${JSON.stringify(args)}`);
+        return handleReconnectTool(db, args as { database_path?: string });
 
       default:
         throw new Error(`Unknown tool: ${name}`);
