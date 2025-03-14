@@ -43,8 +43,11 @@ async function getDatabasePath(): Promise<string> {
     
     try {
       const result = JSON.parse(output);
-      if (result && result.database_path) {
-        const resolvedPath = resolve(result.database_path);
+      // Check for both possible field names the CLI might return
+      const dbPath = result?.database_path || result?.database_filepath;
+      
+      if (dbPath) {
+        const resolvedPath = resolve(dbPath);
         console.error(`Using Tailpipe database path: ${resolvedPath}`);
         
         if (!existsSync(resolvedPath)) {
@@ -54,7 +57,8 @@ async function getDatabasePath(): Promise<string> {
         
         return resolvedPath;
       } else {
-        throw new Error('Tailpipe connect output missing database_path field');
+        console.error('Tailpipe connect output JSON:', JSON.stringify(result));
+        throw new Error('Tailpipe connect output missing database_path or database_filepath field');
       }
     } catch (parseError) {
       console.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
