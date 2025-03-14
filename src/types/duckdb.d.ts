@@ -1,6 +1,10 @@
 declare module 'duckdb' {
+  interface DatabaseOptions {
+    access_mode?: 'READ_ONLY' | 'READ_WRITE';
+  }
+
   class Database {
-    constructor(path: string);
+    constructor(path: string, options?: DatabaseOptions);
     connect(): Connection;
     close(callback: (err: Error | null) => void): void;
   }
