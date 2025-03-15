@@ -405,7 +405,7 @@ export class DatabaseService {
       // Special handling for Claude Desktop's tailpipe database
       if (this.databasePath.includes('tailpipe_') && 
           (sql.includes('information_schema.tables') || sql.includes('list_tables'))) {
-        console.error(`Providing fallback empty result for tailpipe database query: ${sql.substring(0, 50)}...`);
+        logger.warn(`Providing fallback empty result for tailpipe database query: ${sql.substring(0, 50)}...`);
         
         // If this is a schema query, return at least the 'main' schema
         if (sql.includes('schema_name')) {
@@ -435,26 +435,51 @@ export class DatabaseService {
         // Ignore initialization errors when closing
       });
       
+      // Close any active connection
       if (this.connection) {
-        this.connection.close();
+        try {
+          logger.debug('Closing database connection');
+          this.connection.close();
+        } catch (err) {
+          logger.warn(`Error closing connection: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        this.connection = null;
       }
       
+      // Close the database if it's open
       if (this.db) {
-        await new Promise<void>((resolve, reject) => {
-          this.db!.close((err: Error | null) => {
-            if (err) reject(err);
-            else resolve();
+        try {
+          logger.debug('Closing database');
+          await new Promise<void>((resolve, reject) => {
+            const closeTimeout = setTimeout(() => {
+              logger.warn('Database close operation timed out after 1000ms');
+              resolve(); // Resolve anyway to prevent hanging
+            }, 1000);
+            
+            // Prevent the timeout from keeping the process alive
+            closeTimeout.unref();
+            
+            this.db!.close((err: Error | null) => {
+              clearTimeout(closeTimeout);
+              if (err) {
+                logger.warn(`Error in db.close callback: ${err.message}`);
+                reject(err);
+              } else {
+                resolve();
+              }
+            });
           });
-        });
+        } catch (err) {
+          logger.warn(`Error during database close: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        this.db = null;
       }
       
-      this.connection = null;
-      this.db = null;
+      // Reset state
       this.ready = false;
+      logger.debug('Database service fully closed');
     } catch (error) {
-      if (error instanceof Error) {
-        logger.error('Error closing database connection:', error.message);
-      }
+      logger.error('Error in database close method:', error instanceof Error ? error.message : String(error));
     }
   }
 }

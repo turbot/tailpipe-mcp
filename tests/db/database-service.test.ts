@@ -8,8 +8,13 @@ describe('DatabaseService Tests', () => {
     await createTestDatabase(dbPath);
   });
   
-  afterAll(() => {
+  afterAll(async () => {
+    // Make sure any pending operations are completed
+    await new Promise(resolve => setTimeout(resolve, 100));
     cleanupDatabase(dbPath);
+    
+    // Allow event loop to clear
+    await new Promise(resolve => setTimeout(resolve, 100)).catch(() => {});
   });
   
   test('Can initialize and connect to database', async () => {

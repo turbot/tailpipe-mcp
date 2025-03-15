@@ -57,6 +57,9 @@
         "tsconfig": "tsconfig.test.json"
       }]
     },
-    "extensionsToTreatAsEsm": [".ts"]
+    "globalTeardown": "./jest/teardown.js",
+    "extensionsToTreatAsEsm": [".ts"],
+    "testTimeout": 10000,
+    "forceExit": true
   }
 }

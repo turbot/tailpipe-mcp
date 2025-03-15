@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { unlinkSync, existsSync } from 'fs';
 import { Readable, Writable } from 'stream';
 import duckdb from 'duckdb';
+import { logger } from '../src/services/logger.js';
 
 // Type augmentation for DuckDB Connection to add missing types from the connection object
 declare module 'duckdb' {
@@ -29,7 +30,7 @@ export function getTestDatabasePath(testName: string): string {
 
 // Helper to create a test database with sample data
 export function createTestDatabase(dbPath: string): Promise<void> {
-  console.log(`Creating test database at ${dbPath}`);
+  logger.info(`Creating test database at ${dbPath}`);
   
   return new Promise((resolve, reject) => {
     try {
@@ -72,16 +73,41 @@ export function createTestDatabase(dbPath: string): Promise<void> {
           ('r-5678', 'us-west-2', 'bucket', '2023-02-15 09:30:00');
       `, (err: Error | null) => {
         if (err) {
+          logger.error(`Error creating test database: ${err.message}`);
           reject(err);
           return;
         }
         
-        conn.close();
-        db.close(() => {
-          resolve();
-        });
+        try {
+          // Close the connection before the database
+          conn.close();
+          
+          // Use a timeout to avoid hanging if close doesn't callback
+          const timeout = setTimeout(() => {
+            logger.warn(`Database close timed out for ${dbPath}`);
+            resolve();
+          }, 500);
+          
+          // Make sure the timeout doesn't keep the process alive
+          timeout.unref();
+          
+          // Close the database
+          db.close((closeErr) => {
+            clearTimeout(timeout);
+            if (closeErr) {
+              logger.warn(`Error closing test database: ${closeErr.message}`);
+            } else {
+              logger.debug(`Successfully closed test database: ${dbPath}`);
+            }
+            resolve();
+          });
+        } catch (closeErr) {
+          logger.warn(`Exception during test database close: ${closeErr instanceof Error ? closeErr.message : String(closeErr)}`);
+          resolve(); // Still resolve to allow tests to proceed
+        }
       });
     } catch (err) {
+      logger.error(`Failed to set up test database: ${err instanceof Error ? err.message : String(err)}`);
       reject(err);
     }
   });
@@ -92,9 +118,9 @@ export function cleanupDatabase(dbPath: string): void {
   if (existsSync(dbPath)) {
     try {
       unlinkSync(dbPath);
-      console.log(`Removed test database: ${dbPath}`);
+      logger.info(`Removed test database: ${dbPath}`);
     } catch (err) {
-      console.error(`Warning: Could not remove test database: ${err instanceof Error ? err.message : String(err)}`);
+      logger.warn(`Could not remove test database: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 }
