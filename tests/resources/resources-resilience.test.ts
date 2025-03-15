@@ -37,7 +37,11 @@ describe('Resources API Resilience', () => {
     const mcpServer = new MCPServer(goodDbPath);
     
     // Give the server a moment to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => {
+      const timer = setTimeout(resolve, 2000);
+      // Prevent this timer from keeping the Node.js process alive
+      timer.unref();
+    });
     
     // Send resources/list request
     const response = await mcpServer.sendRequest('resources/list', {});
@@ -128,7 +132,7 @@ async function testResourcesListDirect(dbPath: string, timeout: number = 3000): 
     });
     
     // Wait a moment for server to start (if it can)
-    setTimeout(() => {
+    const startTimer = setTimeout(() => {
       if (!serverExited) {
         // Send resources/list request
         const request = JSON.stringify({
@@ -141,14 +145,20 @@ async function testResourcesListDirect(dbPath: string, timeout: number = 3000): 
         serverProcess.stdin.write(request + '\n');
         
         // Wait for response or timeout
-        setTimeout(() => {
+        const responseTimer = setTimeout(() => {
           // Clean up and resolve
           if (!serverExited) {
             serverProcess.kill();
           }
           resolve(response);
         }, timeout);
+        
+        // Prevent this timer from keeping the Node.js process alive
+        responseTimer.unref();
       }
     }, 1000);
+    
+    // Prevent this timer from keeping the Node.js process alive
+    startTimer.unref();
   });
 }

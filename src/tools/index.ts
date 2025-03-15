@@ -6,12 +6,14 @@ import { INSPECT_DATABASE_TOOL, handleInspectDatabaseTool } from './inspectDatab
 import { INSPECT_SCHEMA_TOOL, handleInspectSchemaTool } from './inspectSchema.js';
 import { INSPECT_TABLE_TOOL, handleInspectTableTool } from './inspectTable.js';
 import { LIST_TABLES_TOOL, handleListTablesTool } from './listTables.js';
+import { RECONNECT_TOOL, handleReconnectTool } from './reconnect.js';
 
 export * from './query.js';
 export * from './inspectDatabase.js';
 export * from './inspectSchema.js';
 export * from './inspectTable.js';
 export * from './listTables.js';
+export * from './reconnect.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -23,6 +25,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         INSPECT_DATABASE_TOOL,
         INSPECT_SCHEMA_TOOL,
         INSPECT_TABLE_TOOL,
+        RECONNECT_TOOL,
       ],
     };
   });
@@ -46,6 +49,9 @@ export function setupTools(server: Server, db: DatabaseService) {
 
       case LIST_TABLES_TOOL.name:
         return handleListTablesTool(db, args as { schema?: string; filter?: string });
+        
+      case RECONNECT_TOOL.name:
+        return handleReconnectTool(db, args as { database_path?: string });
 
       default:
         throw new Error(`Unknown tool: ${name}`);
