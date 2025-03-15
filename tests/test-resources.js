@@ -81,19 +81,19 @@ async function testResources() {
   // Wait for response
   await new Promise(resolve => setTimeout(resolve, 2000));
   
-  // Test reading a schema resource
-  console.log('\n📋 Testing resource read (schema)...');
-  const schemaRequest = JSON.stringify({
+  // Test reading status resource
+  console.log('\n📋 Testing resource read (status)...');
+  const statusRequest = JSON.stringify({
     jsonrpc: "2.0",
-    id: "read-schema-1",
+    id: "read-status-1",
     method: "resources/read",
     params: {
-      uri: "postgresql://schema/test"
+      uri: "tailpipe://status"
     }
   });
   
-  console.log('📤 Sending:', schemaRequest);
-  serverProcess.stdin.write(schemaRequest + '\n');
+  console.log('📤 Sending:', statusRequest);
+  serverProcess.stdin.write(statusRequest + '\n');
   
   // Wait for response
   await new Promise(resolve => setTimeout(resolve, 3000));
@@ -109,59 +109,36 @@ async function testResources() {
   }
 }
 
-// Helper to create a test database
 async function createTestDatabase(dbPath) {
   console.log(`📦 Creating test database at ${dbPath}`);
   
-  return new Promise((resolve, reject) => {
-    try {
-      const db = new duckdb.Database(dbPath);
-      const conn = db.connect();
+  const db = new duckdb.Database(dbPath);
+  const conn = db.connect();
+  
+  // Create test tables
+  console.log('📋 Creating test tables...');
+  
+  try {
+    // Create test tables
+    conn.exec(`
+      CREATE SCHEMA test;
+      CREATE TABLE test.orders (id INTEGER, customer TEXT);
+      CREATE TABLE test.users (id INTEGER, name TEXT);
       
-      conn.exec(`
-        -- Create test schema
-        CREATE SCHEMA test;
-        
-        -- Create test tables
-        CREATE TABLE test.users (
-          id INTEGER,
-          name VARCHAR,
-          email VARCHAR
-        );
-        
-        CREATE TABLE test.orders (
-          id INTEGER,
-          user_id INTEGER,
-          amount DOUBLE
-        );
-        
-        -- Create another schema
-        CREATE SCHEMA analytics;
-        
-        CREATE TABLE analytics.metrics (
-          id INTEGER,
-          name VARCHAR,
-          value DOUBLE
-        );
-      `, (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        conn.close();
-        db.close(() => {
-          console.log('✅ Test database created successfully');
-          resolve();
-        });
-      });
-    } catch (err) {
-      reject(err);
-    }
-  });
+      CREATE SCHEMA analytics;
+      CREATE TABLE analytics.metrics (id INTEGER, value FLOAT);
+    `);
+    
+    console.log('✅ Test database created successfully');
+  } catch (err) {
+    console.error('❌ Failed to create test database:', err);
+    throw err;
+  } finally {
+    conn.close();
+    db.close();
+  }
 }
 
-// Run the test
 testResources().catch(err => {
   console.error('❌ Test failed:', err);
   process.exit(1);

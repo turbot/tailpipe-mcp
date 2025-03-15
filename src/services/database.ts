@@ -276,32 +276,6 @@ export class DatabaseService {
     });
   }
 
-  async getSchemaInfo(schemaName: string): Promise<SchemaInfo> {
-    const result = await this.executeQuery(
-      `SELECT 
-         table_name,
-         'BASE TABLE' as table_type,
-         '' as description -- duckdb doesn't support column comments
-       FROM information_schema.tables 
-       WHERE table_schema = ?
-       AND table_schema NOT IN ('information_schema')`,
-      [schemaName]
-    );
-
-    if (result.length === 0) {
-      throw new Error(`Schema not found: ${schemaName}`);
-    }
-
-    return {
-      schema: schemaName,
-      tables: result.map(row => ({
-        name: row.table_name,
-        type: row.table_type,
-        description: row.description,
-      })),
-    };
-  }
-
   async getTableInfo(schemaName: string, tableName: string): Promise<TableInfo> {
     // First check if the schema exists
     const schemaResult = await this.executeQuery(
