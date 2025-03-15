@@ -1,4 +1,5 @@
 import { DatabaseService } from "../services/database.js";
+import { logger } from "../services/logger.js";
 
 export const INSPECT_TABLE_TOOL = {
   name: "inspect_table",
@@ -26,7 +27,7 @@ export async function handleInspectTableTool(db: DatabaseService, args: { name: 
     let columnRows;
     
     if (args.schema) {
-      console.error(`Getting columns for table ${args.name} in schema ${args.schema}`);
+      logger.debug(`Getting columns for table ${args.name} in schema ${args.schema}`);
       
       // Build a query without parameter binding
       const sql = `SELECT 
@@ -44,7 +45,7 @@ export async function handleInspectTableTool(db: DatabaseService, args: { name: 
       columnRows = await db.executeQuery(sql);
     } else {
       // If no schema specified, first find the table in any schema
-      console.error(`Finding schema for table ${args.name}`);
+      logger.debug(`Finding schema for table ${args.name}`);
       
       // Find schemas that contain the table
       const findSchemaSql = `SELECT 
@@ -73,7 +74,7 @@ export async function handleInspectTableTool(db: DatabaseService, args: { name: 
       
       // Use the first matching schema
       const schema = schemaRows[0].table_schema;
-      console.error(`Found table ${args.name} in schema ${schema}`);
+      logger.debug(`Found table ${args.name} in schema ${schema}`);
       
       // Get the columns for the table
       const columnSql = `SELECT 

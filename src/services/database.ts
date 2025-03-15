@@ -3,17 +3,19 @@ import type { Database as DuckDBDatabase, Connection as DuckDBConnection } from 
 import { execSync } from "child_process";
 import { resolve } from "path";
 import { existsSync } from "fs";
+import { logger } from "./logger.js";
 
 /**
  * Get database path using Tailpipe CLI
  * @returns The resolved database path from Tailpipe CLI
  */
+
 export async function getDatabasePathFromTailpipe(): Promise<string> {
   try {
-    console.error('Getting database path from Tailpipe CLI...');
+    logger.info('Getting database path from Tailpipe CLI...');
     if (process.env.DEBUG_TAILPIPE === 'true') {
-      console.error('PATH environment variable:', process.env.PATH);
-      console.error('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
+      logger.debug('PATH environment variable:', process.env.PATH);
+      logger.debug('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
     }
     const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
     
@@ -22,7 +24,7 @@ export async function getDatabasePathFromTailpipe(): Promise<string> {
       
       if (result?.database_filepath) {
         const resolvedPath = resolve(result.database_filepath);
-        console.error(`Using Tailpipe database path: ${resolvedPath}`);
+        logger.info(`Using Tailpipe database path: ${resolvedPath}`);
         
         if (!existsSync(resolvedPath)) {
           throw new Error(`Tailpipe database file does not exist: ${resolvedPath}`);
@@ -30,16 +32,16 @@ export async function getDatabasePathFromTailpipe(): Promise<string> {
         
         return resolvedPath;
       } else {
-        console.error('Tailpipe connect output JSON:', JSON.stringify(result));
+        logger.error('Tailpipe connect output JSON:', JSON.stringify(result));
         throw new Error('Tailpipe connect output missing database_filepath field');
       }
     } catch (parseError) {
-      console.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
-      console.error('Tailpipe output:', output);
+      logger.error('Failed to parse Tailpipe CLI output:', parseError instanceof Error ? parseError.message : String(parseError));
+      logger.error('Tailpipe output:', output);
       throw new Error('Failed to parse Tailpipe CLI output');
     }
   } catch (error) {
-    console.error('Failed to run Tailpipe CLI:', error instanceof Error ? error.message : String(error));
+    logger.error('Failed to run Tailpipe CLI:', error instanceof Error ? error.message : String(error));
     throw new Error('Failed to get database path from Tailpipe CLI');
   }
 }
@@ -57,7 +59,7 @@ export class DatabaseService {
     this.databasePath = databasePath;
     this.sourceType = sourceType;
     this.initPromise = this.initializeDatabase().catch(error => {
-      console.error(`Database initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`Database initialization failed: ${error instanceof Error ? error.message : String(error)}`);
       this.ready = false;
       // Don't rethrow, allow reconnection attempts
     });
@@ -106,7 +108,7 @@ export class DatabaseService {
         // CommonJS or direct export
         Database = duckdb.Database;
       } else {
-        console.error('DuckDB module structure:', Object.keys(duckdb));
+        logger.error('DuckDB module structure:', Object.keys(duckdb));
         throw new Error('Could not find DuckDB Database constructor');
       }
       
@@ -127,7 +129,7 @@ export class DatabaseService {
           if (err) {
             reject(new Error(`Database connection test failed: ${err.message}`));
           } else {
-            console.error(`Database connection test successful: ${JSON.stringify(rows)}`);
+            logger.debug(`Database connection test successful: ${JSON.stringify(rows)}`);
             resolve();
           }
         });
@@ -135,7 +137,7 @@ export class DatabaseService {
       
       // If we've made it this far, the connection is ready
       this.ready = true;
-      console.error(`Successfully connected to database: ${this.databasePath}`);
+      logger.info(`Successfully connected to database: ${this.databasePath}`);
     } catch (error) {
       this.ready = false;
       if (error instanceof Error) {
@@ -153,15 +155,15 @@ export class DatabaseService {
       try {
         // Wait for initialization to complete, but catch errors to handle them
         await this.initPromise.catch(e => {
-          console.error(`Initialization error caught: ${e instanceof Error ? e.message : String(e)}`);
+          logger.error(`Initialization error caught: ${e instanceof Error ? e.message : String(e)}`);
           // We'll handle this in the next check
         });
         
         if (!this.ready || !this.connection) {
           if (retryCount > 0) {
-            console.error(`Retry attempt ${retryCount}: Database connection not ready, attempting to reconnect...`);
+            logger.warn(`Retry attempt ${retryCount}: Database connection not ready, attempting to reconnect...`);
           } else {
-            console.error('Database connection not ready, attempting to reconnect...');
+            logger.warn('Database connection not ready, attempting to reconnect...');
           }
           
           // Clean up existing connections if they exist but are not ready
@@ -181,17 +183,17 @@ export class DatabaseService {
             }
           } catch (e) {
             // Ignore errors when cleaning up
-            console.error(`Error cleaning up existing connections: ${e instanceof Error ? e.message : String(e)}`);
+            logger.error(`Error cleaning up existing connections: ${e instanceof Error ? e.message : String(e)}`);
           }
           
           // Reinitialize the database connection
-          console.error(`Reinitializing connection to ${this.databasePath}`);
+          logger.info(`Reinitializing connection to ${this.databasePath}`);
           this.initPromise = this.initializeDatabase();
           
           try {
             await this.initPromise;
           } catch (e) {
-            console.error(`Reinitialization attempt ${retryCount+1} failed: ${e instanceof Error ? e.message : String(e)}`);
+            logger.error(`Reinitialization attempt ${retryCount+1} failed: ${e instanceof Error ? e.message : String(e)}`);
             // Will be handled in the next check
           }
           
@@ -204,11 +206,11 @@ export class DatabaseService {
         await this.testConnectionQuickly();
         
         // If we reach here, connection is good
-        console.error(`Connection successfully verified on attempt ${retryCount+1}`);
+        logger.info(`Connection successfully verified on attempt ${retryCount+1}`);
         return;
       } catch (error) {
         lastError = error;
-        console.error(`Connection error (attempt ${retryCount+1}/${maxRetries+1}): ${error instanceof Error ? error.message : String(error)}`);
+        logger.error(`Connection error (attempt ${retryCount+1}/${maxRetries+1}): ${error instanceof Error ? error.message : String(error)}`);
         
         // If we're out of retries, bail out
         if (retryCount >= maxRetries) {
@@ -221,7 +223,7 @@ export class DatabaseService {
         
         // Wait with exponential backoff before retrying (capped at 2 seconds)
         const backoffMs = Math.min(100 * Math.pow(2, retryCount), 2000);
-        console.error(`Will retry in ${backoffMs}ms`);
+        logger.info(`Will retry in ${backoffMs}ms`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         retryCount++;
       }
@@ -251,17 +253,17 @@ export class DatabaseService {
         
         if (err) {
           this.ready = false; // Mark connection as not ready
-          console.error(`Connection test failed after ${elapsed}ms: ${err.message}`);
+          logger.error(`Connection test failed after ${elapsed}ms: ${err.message}`);
           reject(new Error(`Connection test failed: ${err.message}`));
         } else if (!rows || rows.length === 0) {
           this.ready = false; // Mark connection as not ready
-          console.error(`Connection test failed after ${elapsed}ms: No rows returned`);
+          logger.error(`Connection test failed after ${elapsed}ms: No rows returned`);
           reject(new Error('Connection test failed: No rows returned'));
         } else {
           // Test passed, connection is working
           if (elapsed > 100) {
             // If the test took a long time, log it as it might indicate performance issues
-            console.error(`Connection test succeeded but took ${elapsed}ms`);
+            logger.warn(`Connection test succeeded but took ${elapsed}ms`);
           }
           resolve();
         }
@@ -270,7 +272,7 @@ export class DatabaseService {
       // Set a timeout to detect if the query is hanging (using 2500ms instead of 1000ms)
       setTimeout(() => {
         if (this.connection) {
-          console.error(`Connection test query is taking too long (>2500ms), may be hung`);
+          logger.warn(`Connection test query is taking too long (>2500ms), may be hung`);
         }
       }, 2500);
     });
@@ -424,7 +426,7 @@ export class DatabaseService {
       this.ready = false;
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Error closing database connection:', error.message);
+        logger.error('Error closing database connection:', error.message);
       }
     }
   }

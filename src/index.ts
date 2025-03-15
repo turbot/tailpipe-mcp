@@ -8,6 +8,7 @@ import { setupPrompts } from "./prompts/index.js";
 import { setupResourceHandlers } from "./resources/index.js";
 import { existsSync } from "fs";
 import { resolve } from "path";
+import { logger } from "./services/logger.js";
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -19,28 +20,28 @@ async function getDatabasePath(): Promise<string> {
   if (providedDatabasePath) {
     const resolvedPath = resolve(providedDatabasePath);
     if (!existsSync(resolvedPath)) {
-      console.error('Database file does not exist:', resolvedPath);
-      console.error('Please provide a valid DuckDB database file path');
+      logger.error('Database file does not exist:', resolvedPath);
+      logger.error('Please provide a valid DuckDB database file path');
       process.exit(1);
     }
-    console.error(`Using provided database path: ${resolvedPath}`);
+    logger.info(`Using provided database path: ${resolvedPath}`);
     return resolvedPath;
   }
   
   // Skip Tailpipe CLI if environment variable is set (for testing purposes)
   if (process.env.SKIP_TAILPIPE_CLI === 'true') {
-    console.error('SKIP_TAILPIPE_CLI is set, not attempting to use Tailpipe CLI');
-    console.error('Please provide a database path directly when SKIP_TAILPIPE_CLI is set');
+    logger.info('SKIP_TAILPIPE_CLI is set, not attempting to use Tailpipe CLI');
+    logger.info('Please provide a database path directly when SKIP_TAILPIPE_CLI is set');
     process.exit(1);
   }
   
   // Otherwise, use the shared function to get the database path from Tailpipe CLI
   try {
-    console.error('No database path provided, attempting to use Tailpipe CLI...');
+    logger.info('No database path provided, attempting to use Tailpipe CLI...');
     return await getDatabasePathFromTailpipe();
   } catch (error) {
-    console.error('Failed to get database path from Tailpipe CLI:', error instanceof Error ? error.message : String(error));
-    console.error('Please install Tailpipe CLI or provide a database path directly.');
+    logger.error('Failed to get database path from Tailpipe CLI:', error instanceof Error ? error.message : String(error));
+    logger.error('Please install Tailpipe CLI or provide a database path directly.');
     process.exit(1);
   }
   
@@ -57,9 +58,9 @@ try {
   db = new DatabaseService(databasePath, sourceType);
 } catch (error: unknown) {
   if (error instanceof Error) {
-    console.error("Failed to initialize database connection:", error.message);
+    logger.error("Failed to initialize database connection:", error.message);
   } else {
-    console.error("Failed to initialize database connection:", error);
+    logger.error("Failed to initialize database connection:", error);
   }
   process.exit(1);
 }
@@ -107,7 +108,7 @@ async function runServer() {
   await server.connect(transport);
   
   // Signal successful startup for tests
-  console.error("MCP server started successfully"); // Use stderr so it doesn't interfere with MCP protocol
+  logger.info("MCP server started successfully"); // Using stderr doesn't interfere with MCP protocol
 }
 
 // Immediately invoked function to allow for top-level await
@@ -115,9 +116,9 @@ async function runServer() {
   try {
     await runServer();
   } catch (error) {
-    console.error("Server error:", error instanceof Error ? error.message : String(error));
+    logger.error("Server error:", error instanceof Error ? error.message : String(error));
     await db.close().catch(e => {
-      console.error("Error closing database:", e instanceof Error ? e.message : String(e));
+      logger.error("Error closing database:", e instanceof Error ? e.message : String(e));
     });
     process.exit(1);
   }

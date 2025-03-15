@@ -142,10 +142,11 @@ export class MCPServer {
       }
     });
     
-    // Log stderr for debugging
+    // Capture stderr for debugging
     if (this.serverProcess.stderr) {
       this.serverProcess.stderr.on('data', (data) => {
-        // Uncomment for debugging: console.error(`Server stderr: ${data.toString().trim()}`);
+        // In test helpers, we collect but don't display stderr logs
+        // Logger's test mode will capture these internally for inspection
       });
     }
   }
@@ -166,12 +167,15 @@ export class MCPServer {
       this.responseResolvers.set(id, resolve);
       
       // Set a timeout to prevent hanging tests
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         if (this.responseResolvers.has(id)) {
           resolve({ error: { message: 'Request timed out' } });
           this.responseResolvers.delete(id);
         }
       }, 5000);
+      
+      // Prevent this timer from keeping the Node.js process alive
+      timeoutId.unref();
     });
     
     // Send the request
@@ -187,7 +191,29 @@ export class MCPServer {
   
   // Close the server
   close(): void {
+    // Clean up any pending request resolvers
+    for (const [id, resolver] of this.responseResolvers.entries()) {
+      resolver({ error: { message: 'Server closing' } });
+    }
+    this.responseResolvers.clear();
+    
+    // Kill the server process
     this.serverProcess.kill();
+    
+    // Close readline interface
     this.readline.close();
+    
+    // Cleanup stdin/stdout/stderr
+    if (this.serverProcess.stdin) {
+      this.serverProcess.stdin.end();
+    }
+    
+    if (this.serverProcess.stdout) {
+      // No need to do anything for stdout as readline is using it
+    }
+    
+    if (this.serverProcess.stderr) {
+      // No API to close stderr stream, but it'll be cleaned up when process exits
+    }
   }
 }

@@ -238,9 +238,19 @@ node dist/index.js
 
 # Or with explicit database path
 node dist/index.js /path/to/your/tailpipe.db
+
+# Control log verbosity with environment variable
+LOG_LEVEL=DEBUG node dist/index.js
 ```
 
 When run without arguments, the server will use the Tailpipe CLI to detect your database (`tailpipe connect --output json`). This requires the Tailpipe CLI to be installed and configured.
+
+You can control the logging verbosity using the `LOG_LEVEL` environment variable. Valid values are:
+- `DEBUG`: Show all messages (most verbose)
+- `INFO`: Show informational, warning, and error messages (default)
+- `WARN`: Show only warning and error messages
+- `ERROR`: Show only error messages
+- `SILENT`: Disable all logging
 
 7. To use your local development version with Claude Desktop, update your `claude_desktop_config.json`:
 ```json

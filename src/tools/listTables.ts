@@ -1,4 +1,5 @@
 import { DatabaseService } from "../services/database.js";
+import { logger } from "../services/logger.js";
 
 export const LIST_TABLES_TOOL = {
   name: "list_tables",
@@ -19,7 +20,7 @@ export const LIST_TABLES_TOOL = {
 } as const;
 
 export async function handleListTablesTool(db: DatabaseService, args: { schema?: string; filter?: string }) {
-  console.error(`Executing list_tables tool with args: ${JSON.stringify(args)}`);
+  logger.debug(`Executing list_tables tool with args: ${JSON.stringify(args)}`);
   
   // Check if we're running in Claude Desktop with tailpipe
   const dbPath = (db as any).databasePath || '';
@@ -67,9 +68,9 @@ export async function handleListTablesTool(db: DatabaseService, args: { schema?:
         }
         
         // Otherwise fall through to the fallback data
-        console.error("Claude Desktop: No tables found, using fallback data");
+        logger.debug("Claude Desktop: No tables found, using fallback data");
       } catch (dbError) {
-        console.error(`Claude Desktop: Database error, using fallback data: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+        logger.error(`Claude Desktop: Database error, using fallback data: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
       }
       
       // Provide fallback tables based on schema name
@@ -102,7 +103,7 @@ export async function handleListTablesTool(db: DatabaseService, args: { schema?:
         fallbackTables = fallbackTables.filter(table => regex.test(table.name));
       }
       
-      console.error(`Claude Desktop: Returning ${fallbackTables.length} fallback tables`);
+      logger.debug(`Claude Desktop: Returning ${fallbackTables.length} fallback tables`);
       
       return {
         content: [{ type: "text", text: JSON.stringify(fallbackTables, null, 2) }],
@@ -150,7 +151,7 @@ export async function handleListTablesTool(db: DatabaseService, args: { schema?:
     
     // For Claude Desktop, provide a more helpful error message
     if (isClaudeDesktopTailpipe) {
-      console.error(`Claude Desktop list_tables error: ${errorMessage}`);
+      logger.error(`Claude Desktop list_tables error: ${errorMessage}`);
       
       // Return an empty array instead of an error for better Claude UX
       return {
