@@ -224,7 +224,10 @@ export class DatabaseService {
         // Wait with exponential backoff before retrying (capped at 2 seconds)
         const backoffMs = Math.min(100 * Math.pow(2, retryCount), 2000);
         logger.info(`Will retry in ${backoffMs}ms`);
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        await new Promise(resolve => {
+          const timer = setTimeout(resolve, backoffMs);
+          timer.unref(); // Prevent this timer from keeping the process alive
+        });
         retryCount++;
       }
     }
@@ -270,11 +273,14 @@ export class DatabaseService {
       });
       
       // Set a timeout to detect if the query is hanging (using 2500ms instead of 1000ms)
-      setTimeout(() => {
+      const hangTimeout = setTimeout(() => {
         if (this.connection) {
           logger.warn(`Connection test query is taking too long (>2500ms), may be hung`);
         }
       }, 2500);
+      
+      // Critical: Prevent timeout from keeping the process alive
+      hangTimeout.unref();
     });
   }
 
