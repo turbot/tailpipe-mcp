@@ -20,23 +20,17 @@
     "clean": "rm -rf dist",
     "clean:tests": "node tests/cleanup.js",
     "start": "node dist/index.js",
-    "test": "node tests/run-all-tests.js",
-    "test:consolidated": "node tests/consolidated-test.js",
-    "test:conversation": "node tests/conversation.js",
-    "test:duckdb": "node tests/duckdb.js",
-    "test:simple": "node tests/simple.js",
-    "test:setup": "node tests/manual-setup.js",
-    "test:mcp": "node tests/mcp.js",
-    "test:list-tables": "node tests/list-tables.js",
-    "test:minimal": "node tests/minimal-list-tables.js",
-    "test:resources": "node tests/test-resources.js",
-    "test:resilience": "node tests/connection-resilience.js",
-    "test:resources-resilience": "node tests/resources-resilience.js",
-    "test:claude-desktop": "node tests/claude-desktop-error.js",
-    "test:tailpipe": "node tests/claude-desktop-tailpipe.js",
-    "test:inspect-tools": "node tests/inspect-tools.js",
-    "test:status": "node tests/test-status-resource.js",
-    "test:reconnect": "node tests/test-reconnect-tool.js"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test:db": "NODE_OPTIONS=--experimental-vm-modules jest -t 'DuckDB'",
+    "test:tools": "NODE_OPTIONS=--experimental-vm-modules jest -t 'Tools'",
+    "test:resources": "NODE_OPTIONS=--experimental-vm-modules jest -t 'Resources'",
+    "test:server": "NODE_OPTIONS=--experimental-vm-modules jest -t 'MCP Server'",
+    "test:legacy": "node tests/run-all-tests.js",
+    "test:legacy:duckdb": "node tests/duckdb.js",
+    "test:legacy:consolidated": "node tests/consolidated-test.js",
+    "test:legacy:simple": "node tests/simple.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
@@ -44,7 +38,25 @@
     "duckdb": "^1.2.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
     "shx": "^0.3.4",
+    "ts-jest": "^29.2.6",
     "typescript": "^5.6.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.ts"],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": ["ts-jest", {
+        "useESM": true,
+        "tsconfig": "tsconfig.test.json"
+      }]
+    },
+    "extensionsToTreatAsEsm": [".ts"]
   }
 }
