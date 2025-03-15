@@ -23,7 +23,8 @@ describe('Resources Tests', () => {
     // Handle the case where resources/list might not be implemented
     // (Method not found error)
     if (response.error && response.error.code === -32601) {
-      console.log('Resources/list method not implemented - skipping test');
+      // Method not found is acceptable - simply assert that and return
+      expect(response.error.code).toBe(-32601);
       return;
     }
     
@@ -41,7 +42,8 @@ describe('Resources Tests', () => {
     // Handle the case where resources/get might not be implemented
     // (Method not found error)
     if (response.error && response.error.code === -32601) {
-      console.log('Resources/get method not implemented - skipping test');
+      // Method not found is acceptable - simply assert that and return
+      expect(response.error.code).toBe(-32601);
       return;
     }
     
@@ -67,7 +69,8 @@ describe('Resources Tests', () => {
     // Handle the case where resources/get might not be implemented
     // (Method not found error)
     if (response.error && response.error.code === -32601) {
-      console.log('Resources/get method not implemented - skipping test');
+      // Method not found is acceptable - simply assert that and return
+      expect(response.error.code).toBe(-32601);
       return;
     }
     

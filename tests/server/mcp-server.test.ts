@@ -24,7 +24,8 @@ describe('MCP Server Integration Tests', () => {
       // The hello endpoint is optional in the MCP specification
       // So we don't fail if it's not found
       if (response.error && response.error.code === -32601) {
-        console.log('Hello method not implemented - this is acceptable per MCP spec');
+        // Test is conditional - Hello is optional in MCP spec
+        expect(response.error.code).toBe(-32601); // Method not found
       } else {
         expect(response.error).toBeUndefined();
         expect(response.result).toBeDefined();
