@@ -47,7 +47,7 @@ describe('Resources API Resilience', () => {
     const response = await mcpServer.sendRequest('resources/list', {});
     
     // Close the server
-    mcpServer.close();
+    await mcpServer.close();
     
     // Check response
     expect(response.error).toBeUndefined();
@@ -96,13 +96,15 @@ describe('Resources API Resilience', () => {
 async function testResourcesListDirect(dbPath: string, timeout: number = 3000): Promise<any> {
   // Start MCP server process directly
   const serverProcess = spawn('node', ['dist/index.js', dbPath], {
-    stdio: ['pipe', 'pipe', 'pipe']
+    stdio: ['pipe', 'pipe', 'pipe'],
+    detached: true // Ensure process group is created for proper cleanup
   });
   
   // Promise that resolves with the response or null
   return new Promise((resolve) => {
     let response: any = null;
     let serverExited = false;
+    let responseTimer: NodeJS.Timeout | null = null;
     
     // Set up line reader for responses
     const rl = createInterface({
@@ -110,12 +112,45 @@ async function testResourcesListDirect(dbPath: string, timeout: number = 3000): 
       terminal: false
     });
     
+    // Function to clean up resources
+    const cleanupResources = () => {
+      // Clean up all listeners to avoid memory leaks
+      rl.removeAllListeners();
+      rl.close();
+      
+      if (serverProcess.stdout) serverProcess.stdout.removeAllListeners();
+      if (serverProcess.stderr) serverProcess.stderr.removeAllListeners();
+      serverProcess.removeAllListeners();
+      
+      // Kill the process if it's still running
+      if (!serverExited) {
+        try {
+          serverProcess.kill('SIGTERM');
+          // If on non-Windows, ensure child processes are also killed
+          if (process.platform !== 'win32' && serverProcess.pid) {
+            try {
+              process.kill(-serverProcess.pid, 'SIGTERM');
+            } catch (e) {
+              // Process group might already be gone
+            }
+          }
+        } catch (e) {
+          // Process might already be gone
+        }
+      }
+    };
+    
     rl.on('line', (line) => {
       if (line.trim()) {
         try {
           const parsed = JSON.parse(line);
           if (parsed.id === 'resources-list-test') {
             response = parsed;
+            
+            // Once we have a response, clean up and resolve
+            if (responseTimer) clearTimeout(responseTimer);
+            cleanupResources();
+            resolve(response);
           }
         } catch (e) {
           // Not valid JSON
@@ -126,7 +161,8 @@ async function testResourcesListDirect(dbPath: string, timeout: number = 3000): 
     serverProcess.on('exit', () => {
       serverExited = true;
       if (!response) {
-        // If server exited without a response, resolve with null
+        // If server exited without a response, clean up and resolve with null
+        cleanupResources();
         resolve(null);
       }
     });
@@ -145,11 +181,9 @@ async function testResourcesListDirect(dbPath: string, timeout: number = 3000): 
         serverProcess.stdin.write(request + '\n');
         
         // Wait for response or timeout
-        const responseTimer = setTimeout(() => {
+        responseTimer = setTimeout(() => {
           // Clean up and resolve
-          if (!serverExited) {
-            serverProcess.kill();
-          }
+          cleanupResources();
           resolve(response);
         }, timeout);
         

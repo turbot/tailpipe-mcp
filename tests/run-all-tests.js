@@ -11,7 +11,7 @@ console.log('🧪 Running all tests with Jest...');
 // Run tests through npm's Jest configuration
 async function runTests() {
   return new Promise((resolve) => {
-    const test = spawn('npm', ['test'], {
+    const test = spawn('npm', ['test', '--', '--detectOpenHandles'], {
       stdio: 'inherit',
       env: { ...process.env, FORCE_COLOR: '1' }
     });
