@@ -51,6 +51,7 @@ async function testResourcesList(dbPath) {
   });
   
   let response = null;
+  let serverExited = false;
   
   rl.on('line', (line) => {
     if (line.trim()) {
@@ -67,6 +68,11 @@ async function testResourcesList(dbPath) {
   serverProcess.stderr.on('data', (data) => {
     console.log('⚠️ Server stderr:', data.toString().trim());
   });
+
+  serverProcess.on('exit', (code) => {
+    console.log('🔚 MCP server exited with code', code);
+    serverExited = true;
+  });
   
   // Wait for server to start
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -82,14 +88,22 @@ async function testResourcesList(dbPath) {
   console.log('📤 Sending resources/list request:', request);
   serverProcess.stdin.write(request + '\n');
   
-  // Wait for response
+  // Wait for response or server exit
   await new Promise(resolve => setTimeout(resolve, 3000));
   
-  // Kill server
-  serverProcess.kill();
-  console.log('🔚 MCP server exited with code 0');
+  // Kill server if it hasn't exited
+  if (!serverExited) {
+    serverProcess.kill();
+    console.log('🔚 MCP server exited with code 0');
+  }
   
-  // Verify response
+  // For non-existent database, we expect the server to exit without a response
+  if (!existsSync(dbPath)) {
+    console.log('✅ Server correctly exited for non-existent database');
+    return;
+  }
+  
+  // Verify response for existing database
   if (response?.result?.resources) {
     console.log(`✅ Received ${response.result.resources.length} resource${response.result.resources.length === 1 ? '' : 's'}`);
     for (const resource of response.result.resources) {

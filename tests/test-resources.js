@@ -66,21 +66,6 @@ async function testResources() {
   // Wait for response
   await new Promise(resolve => setTimeout(resolve, 2000));
   
-  // Test resource templates
-  console.log('\n📋 Testing resource templates...');
-  const templatesRequest = JSON.stringify({
-    jsonrpc: "2.0",
-    id: "templates-1",
-    method: "resources/templates/list",
-    params: {}
-  });
-  
-  console.log('📤 Sending:', templatesRequest);
-  serverProcess.stdin.write(templatesRequest + '\n');
-  
-  // Wait for response
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
   // Test reading status resource
   console.log('\n📋 Testing resource read (status)...');
   const statusRequest = JSON.stringify({

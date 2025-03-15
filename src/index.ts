@@ -5,7 +5,6 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { DatabaseService, getDatabasePathFromTailpipe } from "./services/database.js";
 import { setupTools } from "./tools/index.js";
 import { setupPrompts } from "./prompts/index.js";
-import { setupResourceTemplatesList } from "./resourceTemplates/list.js";
 import { setupResourceHandlers } from "./resources/index.js";
 import { existsSync } from "fs";
 import { resolve } from "path";
@@ -78,16 +77,15 @@ const server = new Server(
     capabilities: {
       tools: {},
       prompts: {},
-      resources: {},
+      resources: {}
     }
   }
 );
 
 // Set up handlers
 setupTools(server, db);
-setupResourceTemplatesList(server);
-setupResourceHandlers(server, db);
 setupPrompts(server);
+setupResourceHandlers(server, db);
 
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
