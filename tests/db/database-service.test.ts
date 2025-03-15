@@ -90,9 +90,8 @@ describe('DatabaseService Tests', () => {
     }
   });
   
-  // Skip table info tests due to issues with parameter binding
-  // A proper fix would require changes to the DatabaseService implementation
-  test.skip('Can get table info', async () => {
+  // Previously skipped due to parameter binding issues, now fixed
+  test('Can get table info', async () => {
     const dbService = new DatabaseService(dbPath);
     
     try {
@@ -115,7 +114,7 @@ describe('DatabaseService Tests', () => {
     }
   });
   
-  test.skip('Throws error for non-existent schema', async () => {
+  test('Throws error for non-existent schema', async () => {
     const dbService = new DatabaseService(dbPath);
     
     try {
@@ -127,7 +126,7 @@ describe('DatabaseService Tests', () => {
     }
   });
   
-  test.skip('Throws error for non-existent table', async () => {
+  test('Throws error for non-existent table', async () => {
     const dbService = new DatabaseService(dbPath);
     
     try {
