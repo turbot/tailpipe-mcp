@@ -111,34 +111,45 @@ This will automatically use the Tailpipe CLI to discover your database. If you w
 
 ### Cursor
 
-To use with Cursor, add this to your `~/.cursor/config.json`:
+To install the Tailpipe MCP server in Cursor:
 
-```json
-{
-  "mcps": {
-    "tailpipe": {
-      "name": "Tailpipe",
-      "description": "Query Tailpipe data",
-      "server": "github:turbot/tailpipe-mcp"
-    }
-  }
-}
-```
+1. Open your Cursor configuration file:
+   ```sh
+   open ~/.cursor/config.json  # On macOS
+   # or
+   code ~/.cursor/config.json  # Using VS Code
+   ```
 
-If you prefer to specify the database path explicitly instead of using the Tailpipe CLI:
+2. Add the following configuration to enable automatic database discovery using the Tailpipe CLI:
+   ```json
+   {
+     "mcps": {
+       "tailpipe": {
+         "name": "Tailpipe",
+         "description": "Query Tailpipe data",
+         "server": "github:turbot/tailpipe-mcp"
+       }
+     }
+   }
+   ```
 
-```json
-{
-  "mcps": {
-    "tailpipe": {
-      "name": "Tailpipe",
-      "description": "Query Tailpipe data",
-      "server": "github:turbot/tailpipe-mcp",
-      "args": ["/path/to/your/tailpipe.db"]
-    }
-  }
-}
-```
+   Alternatively, if you want to specify a database path explicitly:
+   ```json
+   {
+     "mcps": {
+       "tailpipe": {
+         "name": "Tailpipe",
+         "description": "Query Tailpipe data",
+         "server": "github:turbot/tailpipe-mcp",
+         "args": ["/path/to/your/tailpipe.db"]
+       }
+     }
+   }
+   ```
+
+3. Save the configuration file and restart Cursor for the changes to take effect.
+
+4. The Tailpipe MCP server will now be available in your Cursor environment.
 
 ## Prompting Guide
 

@@ -3,11 +3,9 @@ import duckdb from 'duckdb';
 import { mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { createInterface } from 'readline';
+import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
 
-// Extended timeout for the test
-beforeAll(() => {
-  jest.setTimeout(30000);
-});
+// Extended timeout for the test - 30 seconds
 
 // This test specifically simulates the sequence of calls seen in Claude Desktop logs
 // that was causing the error with resources/list
@@ -25,10 +23,34 @@ describe('Claude Desktop Error Regression Test', () => {
     dbPath = join(tempDir, `claude-desktop-test-${Date.now()}.db`);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Kill MCP process if it's running
     if (mcpProcess) {
-      mcpProcess.kill();
+      try {
+        // First try to kill process nicely
+        mcpProcess.kill('SIGTERM');
+        
+        // Give it a chance to exit cleanly
+        await new Promise<void>(resolve => {
+          const timeout = setTimeout(() => {
+            // If it hasn't exited, force kill
+            try {
+              mcpProcess?.kill('SIGKILL');
+            } catch (e) {
+              // Process might already be gone
+            }
+            resolve();
+          }, 500);
+          
+          // Clear timeout if process exits cleanly
+          mcpProcess?.once('exit', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
+      } catch (e) {
+        // Process might already be gone
+      }
     }
   });
 

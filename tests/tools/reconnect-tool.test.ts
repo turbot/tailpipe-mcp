@@ -54,9 +54,9 @@ describe('Reconnect Tool', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
   });
   
-  afterAll(() => {
+  afterAll(async () => {
     // Clean up resources
-    mcpServer.close();
+    await mcpServer.close();
     cleanupDatabase(dbPath1);
     cleanupDatabase(dbPath2);
   });

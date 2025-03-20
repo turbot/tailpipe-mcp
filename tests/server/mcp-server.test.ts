@@ -12,8 +12,8 @@ describe('MCP Server Integration Tests', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
   });
   
-  afterAll(() => {
-    mcpServer.close();
+  afterAll(async () => {
+    await mcpServer.close();
     cleanupDatabase(dbPath);
   });
   

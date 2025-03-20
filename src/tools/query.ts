@@ -1,8 +1,8 @@
 import { DatabaseService } from "../services/database.js";
 
 export const QUERY_TOOL = {
-  name: "query",
-  description: "Run a read-only SQL query",
+  name: "query_tailpipe",
+  description: "Run a read-only Tailpipe SQL query",
   inputSchema: {
     type: "object",
     properties: {

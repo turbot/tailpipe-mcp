@@ -70,7 +70,7 @@ const server = new Server(
   {
     name: "tailpipe",
     version: "0.1.0",
-    description: "Exploring and query Tailpipe data. Provides tools to browse schemas, inspect tables, and execute read-only SQL queries against your Tailpipe database.",
+    description: "Use Tailpipe to explore and query your cloud and security logs with SQL.",
     vendor: "Turbot",
     homepage: "https://github.com/turbot/tailpipe-mcp",
   },

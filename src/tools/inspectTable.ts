@@ -2,7 +2,7 @@ import { DatabaseService } from "../services/database.js";
 import { logger } from "../services/logger.js";
 
 export const INSPECT_TABLE_TOOL = {
-  name: "inspect_table",
+  name: "inspect_tailpipe_table",
   description: "Get detailed information about a table including its columns",
   inputSchema: {
     type: "object",

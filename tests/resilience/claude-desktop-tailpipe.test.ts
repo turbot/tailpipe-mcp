@@ -2,11 +2,9 @@ import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import { mkdirSync, existsSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { createInterface } from 'readline';
+import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
 
-// Extended timeout for the test
-beforeAll(() => {
-  jest.setTimeout(30000);
-});
+// Extended timeout for the test - 30 seconds
 
 describe('Claude Desktop Tailpipe Resilience Test', () => {
   let dbPath: string;
@@ -23,10 +21,34 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
     dbPath = join(tempDir, `tailpipe_20250313151518.db`);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Kill MCP process if it's running
     if (mcpProcess) {
-      mcpProcess.kill();
+      try {
+        // First try to kill process nicely
+        mcpProcess.kill('SIGTERM');
+        
+        // Give it a chance to exit cleanly
+        await new Promise<void>(resolve => {
+          const timeout = setTimeout(() => {
+            // If it hasn't exited, force kill
+            try {
+              mcpProcess?.kill('SIGKILL');
+            } catch (e) {
+              // Process might already be gone
+            }
+            resolve();
+          }, 500);
+          
+          // Clear timeout if process exits cleanly
+          mcpProcess?.once('exit', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
+      } catch (e) {
+        // Process might already be gone
+      }
     }
   });
 

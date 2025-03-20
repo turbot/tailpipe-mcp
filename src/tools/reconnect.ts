@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 import { logger } from "../services/logger.js";
 
 export const RECONNECT_TOOL = {
-  name: "reconnect",
+  name: "reconnect_tailpipe",
   description: "Reconnect to the database, optionally using a new database path",
   inputSchema: {
     type: "object",

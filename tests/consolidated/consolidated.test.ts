@@ -1,4 +1,4 @@
-import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer } from '../helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer, sleep } from '../helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
 
@@ -35,12 +35,12 @@ describe('Consolidated MCP Tests', () => {
     mcpServer = new MCPServer(dbPath);
     
     // Wait for server to initialize
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await sleep(2000);
   });
   
-  afterAll(() => {
+  afterAll(async () => {
     // Clean up resources
-    mcpServer.close();
+    await mcpServer.close();
     cleanupDatabase(dbPath);
   });
   

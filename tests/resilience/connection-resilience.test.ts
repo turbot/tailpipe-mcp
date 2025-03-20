@@ -22,9 +22,9 @@ describe('Database Connection Resilience', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
   });
   
-  afterAll(() => {
+  afterAll(async () => {
     // Clean up resources
-    mcpServer.close();
+    await mcpServer.close();
     cleanupDatabase(dbPath);
   });
   

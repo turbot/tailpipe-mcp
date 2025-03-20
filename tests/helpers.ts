@@ -28,6 +28,17 @@ export function getTestDatabasePath(testName: string): string {
   return join(process.cwd(), '.tmp-test', `${testName}-${testId}.db`);
 }
 
+/**
+ * Helper to wait for a specified duration with a timer that won't keep the process alive
+ * @param ms Timeout duration in milliseconds
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    const timeout = setTimeout(resolve, ms);
+    timeout.unref(); // Prevent timer from keeping the process alive
+  });
+}
+
 // Helper to create a test database with sample data
 export function createTestDatabase(dbPath: string): Promise<void> {
   logger.info(`Creating test database at ${dbPath}`);
@@ -216,30 +227,65 @@ export class MCPServer {
   }
   
   // Close the server
-  close(): void {
+  async close(): Promise<void> {
     // Clean up any pending request resolvers
     for (const [id, resolver] of this.responseResolvers.entries()) {
       resolver({ error: { message: 'Server closing' } });
     }
     this.responseResolvers.clear();
     
-    // Kill the server process
-    this.serverProcess.kill();
-    
-    // Close readline interface
+    // Close readline interface and remove all listeners
+    this.readline.removeAllListeners();
     this.readline.close();
     
-    // Cleanup stdin/stdout/stderr
+    // Clean up all streams
     if (this.serverProcess.stdin) {
+      this.serverProcess.stdin.removeAllListeners();
       this.serverProcess.stdin.end();
     }
     
     if (this.serverProcess.stdout) {
-      // No need to do anything for stdout as readline is using it
+      this.serverProcess.stdout.removeAllListeners();
     }
     
     if (this.serverProcess.stderr) {
-      // No API to close stderr stream, but it'll be cleaned up when process exits
+      this.serverProcess.stderr.removeAllListeners();
+    }
+    
+    // Remove all process listeners
+    this.serverProcess.removeAllListeners();
+    
+    // Attempt graceful termination first
+    let exited = false;
+    try {
+      this.serverProcess.kill('SIGTERM');
+      
+      // Wait for process to exit gracefully with a timeout
+      await new Promise<void>(resolve => {
+        const timeout = setTimeout(() => {
+          // If process hasn't exited, force kill
+          if (!exited) {
+            try {
+              this.serverProcess.kill('SIGKILL');
+            } catch (e) {
+              // Process might already be gone
+            }
+          }
+          resolve();
+        }, 500);
+        
+        // Prevent timer from keeping process alive
+        timeout.unref();
+        
+        // Clean up if process exits
+        this.serverProcess.once('exit', () => {
+          exited = true;
+          clearTimeout(timeout);
+          resolve();
+        });
+      });
+    } catch (e) {
+      // Process might already be gone
     }
   }
 }

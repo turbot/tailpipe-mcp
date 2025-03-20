@@ -2,7 +2,7 @@ import { DatabaseService } from "../services/database.js";
 import { logger } from "../services/logger.js";
 
 export const LIST_TABLES_TOOL = {
-  name: "list_tables",
+  name: "list_tailpipe_tables",
   description: "List available tables in the database",
   inputSchema: {
     type: "object",
