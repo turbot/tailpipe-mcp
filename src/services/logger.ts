@@ -5,27 +5,34 @@
  * and supports suppressing logs during tests.
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
+// Define log levels
+export enum LogLevel {
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARN = 'warn',
+  ERROR = 'error',
+  SILENT = 'silent'
+}
 
 interface LoggerOptions {
   level?: LogLevel;
   isTestEnvironment?: boolean;
 }
 
-class Logger {
+export class Logger {
   private options: Required<LoggerOptions>;
   private logs: string[] = []; // Store logs when in test mode
 
   constructor(options: LoggerOptions = {}) {
     const envLevel = (process.env.TAILPIPE_MCP_LOG_LEVEL || 'info').toLowerCase();
     this.options = {
-      level: this.isValidLogLevel(envLevel) ? envLevel : 'info',
+      level: options.level || (this.isValidLogLevel(envLevel) ? envLevel as LogLevel : LogLevel.INFO),
       isTestEnvironment: options.isTestEnvironment || false
     };
   }
 
   private isValidLogLevel(level: string): level is LogLevel {
-    return ['debug', 'info', 'warn', 'error', 'silent'].includes(level);
+    return Object.values(LogLevel).includes(level as LogLevel);
   }
 
   /**
@@ -42,14 +49,14 @@ class Logger {
   private getLogLevelFromEnv(): LogLevel {
     const envLevel = process.env.TAILPIPE_MCP_LOG_LEVEL?.toUpperCase();
     
-    if (envLevel === 'DEBUG') return 'debug';
-    if (envLevel === 'INFO') return 'info';
-    if (envLevel === 'WARN') return 'warn';
-    if (envLevel === 'ERROR') return 'error';
-    if (envLevel === 'SILENT') return 'silent';
+    if (envLevel === 'DEBUG') return LogLevel.DEBUG;
+    if (envLevel === 'INFO') return LogLevel.INFO;
+    if (envLevel === 'WARN') return LogLevel.WARN;
+    if (envLevel === 'ERROR') return LogLevel.ERROR;
+    if (envLevel === 'SILENT') return LogLevel.SILENT;
     
     // Default level
-    return 'info';
+    return LogLevel.INFO;
   }
 
   /**
@@ -59,11 +66,18 @@ class Logger {
     this.options = { ...this.options, ...options };
   }
 
+  private shouldLog(targetLevel: LogLevel): boolean {
+    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.SILENT];
+    const currentLevelIndex = levels.indexOf(this.options.level);
+    const targetLevelIndex = levels.indexOf(targetLevel);
+    return currentLevelIndex <= targetLevelIndex && this.options.level !== LogLevel.SILENT;
+  }
+
   /**
    * Debug level logging
    */
   debug(message: string, ...args: any[]): void {
-    if (this.options.level === 'debug') {
+    if (this.shouldLog(LogLevel.DEBUG)) {
       this.log('DEBUG', message, ...args);
     }
   }
@@ -72,7 +86,7 @@ class Logger {
    * Info level logging
    */
   info(message: string, ...args: any[]): void {
-    if (this.options.level === 'info') {
+    if (this.shouldLog(LogLevel.INFO)) {
       this.log('INFO', message, ...args);
     }
   }
@@ -81,7 +95,7 @@ class Logger {
    * Warning level logging
    */
   warn(message: string, ...args: any[]): void {
-    if (this.options.level === 'warn') {
+    if (this.shouldLog(LogLevel.WARN)) {
       this.log('WARN', message, ...args);
     }
   }
@@ -90,7 +104,7 @@ class Logger {
    * Error level logging
    */
   error(message: string, ...args: any[]): void {
-    if (this.options.level === 'error') {
+    if (this.shouldLog(LogLevel.ERROR)) {
       this.log('ERROR', message, ...args);
     }
   }
