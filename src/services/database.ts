@@ -105,7 +105,7 @@ export class DatabaseService {
       
       // If we've made it this far, the connection is ready
       this.ready = true;
-      logger.info(`Successfully connected to database: ${this.databasePath}`);
+      logger.debug(`Successfully connected to database: ${this.databasePath}`);
     } catch (error) {
       this.ready = false;
       if (error instanceof Error) {
@@ -174,7 +174,7 @@ export class DatabaseService {
         await this.testConnectionQuickly();
         
         // If we reach here, connection is good
-        logger.info(`Connection successfully verified on attempt ${retryCount+1}`);
+        logger.debug(`Connection successfully verified on attempt ${retryCount+1}`);
         return;
       } catch (error) {
         lastError = error;
@@ -191,7 +191,7 @@ export class DatabaseService {
         
         // Wait with exponential backoff before retrying (capped at 2 seconds)
         const backoffMs = Math.min(100 * Math.pow(2, retryCount), 2000);
-        logger.info(`Will retry in ${backoffMs}ms`);
+        logger.debug(`Will retry in ${backoffMs}ms`);
         await new Promise(resolve => {
           const timer = setTimeout(resolve, backoffMs);
           timer.unref(); // Prevent this timer from keeping the process alive
