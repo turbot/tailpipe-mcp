@@ -1,5 +1,5 @@
 import duckdb from 'duckdb';
-import { getTestDatabasePath, cleanupDatabase } from '../../setup/test-helpers';
+import { getTestDatabasePath, cleanupDatabase } from '../setup/test-helpers';
 
 describe('DuckDB Connection Tests', () => {
   const dbPath = getTestDatabasePath('duckdb-basic');

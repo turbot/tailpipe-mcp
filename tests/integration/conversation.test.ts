@@ -1,4 +1,4 @@
-import { MCPServer, getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../../setup/test-helpers';
+import { MCPServer, getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../setup/test-helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
 import { DatabaseService } from '../../src/services/database';

@@ -1,5 +1,5 @@
 import { DatabaseService } from '../../src/services/database.js';
-import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../../setup/test-helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../setup/test-helpers';
 import { logger } from '../../src/services/logger.js';
 
 // Import the tools we want to test

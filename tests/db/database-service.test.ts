@@ -1,5 +1,5 @@
 import { DatabaseService } from '../../src/services/database.js';
-import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../../setup/test-helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../setup/test-helpers';
 
 describe('DatabaseService Tests', () => {
   const dbPath = getTestDatabasePath('db-service');
