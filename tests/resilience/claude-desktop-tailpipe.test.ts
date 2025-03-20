@@ -5,6 +5,20 @@ import { createInterface } from 'readline';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
 import { logger } from '../../src/services/logger.js';
 
+// Type definitions for responses
+interface MCPResponse {
+  id: string;
+  result?: any;
+  error?: {
+    code: number;
+    message: string;
+  };
+}
+
+interface MCPResponses {
+  [key: string]: MCPResponse;
+}
+
 // Extended timeout for the test - 30 seconds
 
 describe('Claude Desktop Tailpipe Resilience Test', () => {
@@ -54,38 +68,34 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
   });
 
   afterAll(() => {
-    // Clean up database
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        logger.info(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
       logger.error(`Failed to remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
 
-  // Create an invalid database file
-  function createInvalidDatabaseFile(): void {
-    // Create an invalid database file
-    writeFileSync(dbPath, 'This is not a valid DuckDB file');
-    logger.info(`Created test file at ${dbPath}`);
+  function createInvalidDatabaseFile(): Promise<void> {
+    return new Promise((resolve) => {
+      // Create an invalid database file
+      writeFileSync(dbPath, 'This is not a valid DuckDB file');
+      resolve();
+    });
   }
 
-  // Start MCP server and capture responses
   async function startMCPServer(): Promise<{
     process: ChildProcessWithoutNullStreams,
-    responsesPromise: Promise<Record<string, any>>
+    responsePromise: Promise<MCPResponses>
   }> {
-    logger.info('Starting MCP server...');
-    
     return new Promise((resolve) => {
       const process = spawn('node', ['dist/index.js', dbPath], {
         stdio: ['pipe', 'pipe', 'pipe']
       });
       
       // Track responses
-      const responses: Record<string, any> = {};
+      const responses: MCPResponses = {};
       
       // Use readline for proper line-by-line processing
       const rl = createInterface({
@@ -116,7 +126,7 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
       // Wait for server to start
       setTimeout(() => {
         // Create a promise that will resolve when we have all expected responses
-        const responsesPromise = new Promise<Record<string, any>>((resolveResponses) => {
+        const responsesPromise = new Promise<MCPResponses>((resolveResponses) => {
           const requiredResponses = ['initialize', 'resources-list', 'tools-list', 'list-tables'];
           
           // Check every 500ms if we have all required responses
@@ -135,17 +145,17 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
           }, 10000);
         });
         
-        resolve({ process, responsesPromise });
+        resolve({ process, responsePromise: responsesPromise });
       }, 1000);
     });
   }
 
   test('should handle requests with invalid database file', async () => {
     // Create invalid database file
-    createInvalidDatabaseFile();
+    await createInvalidDatabaseFile();
     
     // Start MCP server
-    const { process, responsesPromise } = await startMCPServer();
+    const { process, responsePromise } = await startMCPServer();
     mcpProcess = process;
     
     // Send initialize request
@@ -204,7 +214,7 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
     mcpProcess.stdin.write(JSON.stringify(listTablesRequest) + '\n');
     
     // Wait for all responses
-    const responses = await responsesPromise;
+    const responses = await responsePromise;
     
     // Verify initialize response
     expect(responses['initialize']).toBeDefined();

@@ -41,8 +41,6 @@ export function sleep(ms: number): Promise<void> {
 
 // Helper to create a test database with sample data
 export function createTestDatabase(dbPath: string): Promise<void> {
-  logger.info(`Creating test database at ${dbPath}`);
-  
   return new Promise((resolve, reject) => {
     try {
       const db = new duckdb.Database(dbPath);
@@ -126,13 +124,10 @@ export function createTestDatabase(dbPath: string): Promise<void> {
 
 // Helper to clean up a test database
 export function cleanupDatabase(dbPath: string): void {
-  if (existsSync(dbPath)) {
-    try {
-      unlinkSync(dbPath);
-      logger.info(`Removed test database: ${dbPath}`);
-    } catch (err) {
-      logger.warn(`Could not remove test database: ${err instanceof Error ? err.message : String(err)}`);
-    }
+  try {
+    unlinkSync(dbPath);
+  } catch (err) {
+    // Ignore errors if file doesn't exist
   }
 }
 

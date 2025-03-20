@@ -37,11 +37,9 @@ describe('MCP Server Startup Test', () => {
   });
 
   afterAll(() => {
-    // Clean up database
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        logger.info(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
       logger.error(`Failed to remove temporary database: ${err instanceof Error ? err.message : String(err)}`);

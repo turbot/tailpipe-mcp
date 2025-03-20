@@ -5,6 +5,7 @@ import { join } from 'path';
 import { createInterface } from 'readline';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
 import { logger } from '../../src/services/logger.js';
+import { MCPServer } from '../helpers';
 
 // Extended timeout for the test - 30 seconds
 
@@ -59,7 +60,6 @@ describe('Claude Desktop Error Regression Test', () => {
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        logger.info(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
       logger.error(`Failed to remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
@@ -70,8 +70,6 @@ describe('Claude Desktop Error Regression Test', () => {
   function createTestDatabase(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        logger.info(`Creating test database at ${dbPath}...`);
-        
         // Create a new DuckDB database
         const db = new duckdb.Database(dbPath);
         const conn = db.connect();
@@ -105,7 +103,6 @@ describe('Claude Desktop Error Regression Test', () => {
           // Close connection
           conn.close();
           db.close(() => {
-            logger.info('Database created successfully');
             resolve();
           });
         });
@@ -120,8 +117,6 @@ describe('Claude Desktop Error Regression Test', () => {
     process: ChildProcessWithoutNullStreams,
     responsePromise: Promise<any[]>
   }> {
-    logger.info('Starting MCP server...');
-    
     return new Promise((resolve) => {
       const process = spawn('node', ['dist/index.js', dbPath], {
         stdio: ['pipe', 'pipe', 'pipe']
@@ -262,3 +257,33 @@ describe('Claude Desktop Error Regression Test', () => {
     expect(Array.isArray(resourcesResponse.result.resources)).toBe(true);
   }, 30000);
 });
+
+export function cleanupDatabase(dbPath: string): void {
+  try {
+    unlinkSync(dbPath);
+  } catch (err) {
+    // Ignore errors if file doesn't exist
+  }
+}
+
+export function createTestDatabase(dbPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const db = new duckdb.Database(dbPath);
+    const connection = db.connect();
+    
+    connection.all('SELECT 1 as test', (err, rows) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+export function startMCPServer(dbPath: string): Promise<MCPServer> {
+  return new Promise((resolve) => {
+    const mcpServer = new MCPServer(dbPath);
+    resolve(mcpServer);
+  });
+}
