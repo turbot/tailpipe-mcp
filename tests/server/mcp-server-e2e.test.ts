@@ -196,26 +196,7 @@ describe('MCP Server E2E Tests', () => {
     return process;
   }
 
-  // Skip this test for now as it seems to have issues
-  test.skip('should get info/hello response', async () => {
-    // Start MCP server
-    const server = await startServer();
-    
-    // Send info/hello request
-    const response = await sendMCPRequest(server, {
-      method: "info/hello",
-      params: {}
-    });
-    
-    // Verify response
-    expect(response).toBeDefined();
-    if (response) {
-      expect(response.result).toBeDefined();
-      expect(response.result.name).toBe("tailpipe-mcp");
-    }
-  }, 10000);
-
-  test.skip('should list available tools', async () => {
+  test('should list available tools', async () => {
     // Start MCP server
     const server = await startServer();
     
@@ -233,11 +214,11 @@ describe('MCP Server E2E Tests', () => {
     
     // Verify required tools are present
     const toolNames = response.result.tools.map((t: any) => t.name);
-    expect(toolNames).toContain('query');
-    expect(toolNames).toContain('list_tables');
+    expect(toolNames).toContain('query_tailpipe');
+    expect(toolNames).toContain('list_tailpipe_tables');
   }, 10000);
 
-  test.skip('should execute query successfully', async () => {
+  test('should execute query successfully', async () => {
     // Start MCP server
     const server = await startServer();
     
@@ -245,7 +226,7 @@ describe('MCP Server E2E Tests', () => {
     const response = await sendMCPRequest(server, {
       method: "tools/call",
       params: {
-        name: "query",
+        name: "query_tailpipe",
         arguments: {
           sql: "SELECT * FROM test_data"
         }
@@ -266,7 +247,7 @@ describe('MCP Server E2E Tests', () => {
     expect(parsedResults.length).toBe(3); // We inserted 3 rows
   }, 10000);
 
-  test.skip('should list tables successfully', async () => {
+  test('should list tables successfully', async () => {
     // Start MCP server
     const server = await startServer();
     
@@ -274,7 +255,7 @@ describe('MCP Server E2E Tests', () => {
     const response = await sendMCPRequest(server, {
       method: "tools/call",
       params: {
-        name: "list_tables",
+        name: "list_tailpipe_tables",
         arguments: {}
       }
     });
