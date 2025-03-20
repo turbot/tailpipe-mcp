@@ -408,20 +408,6 @@ export class DatabaseService {
         return this.executeQuery(sql, params, retries - 1);
       }
       
-      // Special handling for Claude Desktop's tailpipe database
-      if (this.databasePath.includes('tailpipe_') && 
-          (sql.includes('information_schema.tables') || sql.includes('list_tables'))) {
-        logger.warn(`Providing fallback empty result for tailpipe database query: ${sql.substring(0, 50)}...`);
-        
-        // If this is a schema query, return at least the 'main' schema
-        if (sql.includes('schema_name')) {
-          return [{ schema_name: 'main' }];
-        }
-        
-        // For other information_schema queries, return an empty array instead of failing
-        return [];
-      }
-      
       // Either not a connection error or out of retries
       if (error instanceof Error) {
         throw new Error(`Query execution failed: ${error.message}`);
