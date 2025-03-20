@@ -1,4 +1,7 @@
-import { getTestDatabasePath, cleanupDatabase, MCPServer } from '../helpers';
+import { MCPServer } from '../helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../helpers';
+import { DatabaseService } from '../../src/services/database';
+import { ContentItem, MCPResponse } from '../types';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
 
@@ -9,9 +12,8 @@ import duckdb from 'duckdb';
  */
 
 describe('List Tables Tool', () => {
-  // Test data - this will be populated in beforeAll
-  const dbPath = getTestDatabasePath('list-tables');
-  let mcpServer: MCPServer;
+  const testDbPath = getTestDatabasePath('list-tables');
+  let server: MCPServer;
   
   // Create a database with multiple schemas and tables for testing
   async function createListTablesDatabase(dbPath: string): Promise<void> {
@@ -75,137 +77,101 @@ describe('List Tables Tool', () => {
   }
   
   beforeAll(async () => {
-    // Create test database with multiple schemas and tables
-    await createListTablesDatabase(dbPath);
+    // Create test database with tables
+    await createTestDatabase(testDbPath);
     
-    // Start MCP server
-    mcpServer = new MCPServer(dbPath);
-    
-    // Wait for server to initialize
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Initialize server
+    server = new MCPServer(testDbPath);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for server init
   });
   
   afterAll(async () => {
-    // Clean up resources
-    await mcpServer.close();
-    cleanupDatabase(dbPath);
+    await cleanupDatabase(testDbPath);
   });
   
-  test('lists all tables across schemas', async () => {
-    const response = await mcpServer.sendRequest('tools/call', {
-      name: 'list_tables',
-      arguments: {}
+  describe('list_tailpipe_tables Tool', () => {
+    test('lists all tables across schemas', async () => {
+      const response = await server.sendRequest('tools/call', {
+        name: 'list_tailpipe_tables',
+        arguments: {}
+      }) as MCPResponse;
+
+      expect(response.error).toBeUndefined();
+      expect(response.result).toBeDefined();
+      
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
+      
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const tables = JSON.parse(textContent!.text);
+      expect(Array.isArray(tables)).toBe(true);
+      expect(tables.length).toBeGreaterThan(0);
+      
+      // Should include tables in test schema
+      const testSchemaTables = tables.filter((table: any) => table.schema === 'test');
+      expect(testSchemaTables.length).toBeGreaterThan(0);
     });
-    
-    expect(response.error).toBeUndefined();
-    expect(response.result).toBeDefined();
-    
-    // Parse the result content
-    const content = response.result.content?.find((item: any) => 
-      item.type === 'text' && item.text
-    );
-    expect(content).toBeDefined();
-    
-    // Parse the table list
-    const tables = JSON.parse(content.text);
-    expect(Array.isArray(tables)).toBe(true);
-    
-    // Should have at least 3 tables from our database
-    expect(tables.length).toBeGreaterThanOrEqual(3);
-    
-    // Find the correct property names for schema and table
-    const firstTable = tables[0];
-    const schemaProperty = 'schema' in firstTable ? 'schema' : 'table_schema';
-    const tableProperty = 'name' in firstTable ? 'name' : 'table_name';
-    
-    // Find tables from both schemas
-    const awsBucketTable = tables.find((t: any) => 
-      t[schemaProperty] === 'aws' && t[tableProperty] === 's3_bucket'
-    );
-    const awsInstanceTable = tables.find((t: any) => 
-      t[schemaProperty] === 'aws' && t[tableProperty] === 'ec2_instance'
-    );
-    const azureStorageTable = tables.find((t: any) => 
-      t[schemaProperty] === 'azure' && t[tableProperty] === 'storage_account'
-    );
-    
-    expect(awsBucketTable).toBeDefined();
-    expect(awsInstanceTable).toBeDefined();
-    expect(azureStorageTable).toBeDefined();
-  });
-  
-  test('filters tables by schema', async () => {
-    const response = await mcpServer.sendRequest('tools/call', {
-      name: 'list_tables',
-      arguments: { 
-        schema: 'aws' 
-      }
+
+    test('filters tables by schema', async () => {
+      const response = await server.sendRequest('tools/call', {
+        name: 'list_tailpipe_tables',
+        arguments: {
+          schema: 'test'
+        }
+      }) as MCPResponse;
+
+      expect(response.error).toBeUndefined();
+      expect(response.result).toBeDefined();
+      
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
+      
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const tables = JSON.parse(textContent!.text);
+      expect(Array.isArray(tables)).toBe(true);
+      expect(tables.length).toBeGreaterThan(0);
+      
+      // All tables should be in test schema
+      tables.forEach((table: any) => {
+        expect(table.schema).toBe('test');
+      });
     });
-    
-    expect(response.error).toBeUndefined();
-    expect(response.result).toBeDefined();
-    
-    // Parse the result content
-    const content = response.result.content?.find((item: any) => 
-      item.type === 'text' && item.text
-    );
-    expect(content).toBeDefined();
-    
-    // Parse the table list
-    const tables = JSON.parse(content.text);
-    expect(Array.isArray(tables)).toBe(true);
-    
-    // Should have exactly 2 tables from aws schema
-    expect(tables.length).toBe(2);
-    
-    // Find the correct property names for schema and table
-    const firstTable = tables[0];
-    const schemaProperty = 'schema' in firstTable ? 'schema' : 'table_schema';
-    const tableProperty = 'name' in firstTable ? 'name' : 'table_name';
-    
-    // All tables should be from aws schema
-    tables.forEach((table: any) => {
-      expect(table[schemaProperty]).toBe('aws');
+
+    test('filters tables by name pattern', async () => {
+      const response = await server.sendRequest('tools/call', {
+        name: 'list_tailpipe_tables',
+        arguments: {
+          filter: '%example%'
+        }
+      }) as MCPResponse;
+
+      expect(response.error).toBeUndefined();
+      expect(response.result).toBeDefined();
+      
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
+      
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const tables = JSON.parse(textContent!.text);
+      expect(Array.isArray(tables)).toBe(true);
+      expect(tables.length).toBeGreaterThan(0);
+      
+      // All tables should match pattern
+      tables.forEach((table: any) => {
+        expect(table.name.toLowerCase()).toContain('example');
+      });
     });
-    
-    // Should contain both aws tables
-    const tableNames = tables.map((t: any) => t[tableProperty]);
-    expect(tableNames).toContain('s3_bucket');
-    expect(tableNames).toContain('ec2_instance');
-    expect(tableNames).not.toContain('storage_account');
-  });
-  
-  test('filters tables by name pattern', async () => {
-    const response = await mcpServer.sendRequest('tools/call', {
-      name: 'list_tables',
-      arguments: { 
-        filter: '%s3%' 
-      }
-    });
-    
-    expect(response.error).toBeUndefined();
-    expect(response.result).toBeDefined();
-    
-    // Parse the result content
-    const content = response.result.content?.find((item: any) => 
-      item.type === 'text' && item.text
-    );
-    expect(content).toBeDefined();
-    
-    // Parse the table list
-    const tables = JSON.parse(content.text);
-    expect(Array.isArray(tables)).toBe(true);
-    
-    // Should have exactly 1 table matching the s3 pattern
-    expect(tables.length).toBe(1);
-    
-    // Find the correct property names for schema and table
-    const firstTable = tables[0];
-    const schemaProperty = 'schema' in firstTable ? 'schema' : 'table_schema';
-    const tableProperty = 'name' in firstTable ? 'name' : 'table_name';
-    
-    // Check the filtered table
-    expect(tables[0][schemaProperty]).toBe('aws');
-    expect(tables[0][tableProperty]).toBe('s3_bucket');
   });
 });

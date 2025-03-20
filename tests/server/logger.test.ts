@@ -1,70 +1,109 @@
-import { logger, LogLevel } from '../../src/services/logger.js';
-import { jest } from '@jest/globals';
+import { Logger, LogLevel } from '../../src/services/logger';
 
 describe('Logger', () => {
+  let logger: Logger;
+  
   beforeEach(() => {
-    // Reset logger state before each test
-    logger.clearLogs();
-    
-    // Configure logger for test mode
-    logger.configure({
+    logger = new Logger({
       level: LogLevel.DEBUG,
       isTestEnvironment: true
     });
-    
-    // Spy on console.error to make sure it's not called
-    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
   
   afterEach(() => {
-    jest.restoreAllMocks();
+    // Clear logs after each test
+    logger.clearLogs();
   });
   
-  it('should collect logs in test mode without writing to console', () => {
-    // Log messages at different levels
-    logger.debug('Debug message');
-    logger.info('Info message');
-    logger.warn('Warning message');
-    logger.error('Error message');
+  test('logs debug messages when level is debug', () => {
+    const message = 'Test debug message';
+    logger.debug(message);
     
-    // Check that logs were collected
     const logs = logger.getCollectedLogs();
-    expect(logs.length).toBe(4);
-    expect(logs[0]).toMatch(/\[DEBUG\] Debug message/);
-    expect(logs[1]).toMatch(/\[INFO\] Info message/);
-    expect(logs[2]).toMatch(/\[WARN\] Warning message/);
-    expect(logs[3]).toMatch(/\[ERROR\] Error message/);
-    
-    // Verify console.error was not called
-    expect(console.error).not.toHaveBeenCalled();
+    expect(logs.length).toBe(1);
+    expect(logs[0]).toContain('[DEBUG]');
+    expect(logs[0]).toContain(message);
   });
   
-  it('should respect log level configuration', () => {
-    // Set log level to WARN
+  test('does not log debug messages when level is info', () => {
+    logger = new Logger({
+      level: LogLevel.INFO,
+      isTestEnvironment: true
+    });
+    const message = 'Test debug message';
+    logger.debug(message);
+    
+    const logs = logger.getCollectedLogs();
+    expect(logs.length).toBe(0);
+  });
+  
+  test('logs info messages when level is info', () => {
+    logger = new Logger({
+      level: LogLevel.INFO,
+      isTestEnvironment: true
+    });
+    const message = 'Test info message';
+    logger.info(message);
+    
+    const logs = logger.getCollectedLogs();
+    expect(logs.length).toBe(1);
+    expect(logs[0]).toContain('[INFO]');
+    expect(logs[0]).toContain(message);
+  });
+  
+  test('logs warning messages when level is warn', () => {
     logger.configure({ level: LogLevel.WARN });
+    const message = 'Test warning message';
+    logger.warn(message);
     
-    // Log messages at different levels
+    const logs = logger.getCollectedLogs();
+    expect(logs.length).toBe(1);
+    expect(logs[0]).toContain('[WARN]');
+    expect(logs[0]).toContain(message);
+  });
+  
+  test('logs error messages when level is error', () => {
+    logger = new Logger({
+      level: LogLevel.ERROR,
+      isTestEnvironment: true
+    });
+    const message = 'Test error message';
+    logger.error(message);
+    
+    const logs = logger.getCollectedLogs();
+    expect(logs.length).toBe(1);
+    expect(logs[0]).toContain('[ERROR]');
+    expect(logs[0]).toContain(message);
+  });
+  
+  test('does not log when level is silent', () => {
+    logger.configure({ level: LogLevel.SILENT });
     logger.debug('Debug message');
     logger.info('Info message');
     logger.warn('Warning message');
     logger.error('Error message');
     
-    // Check that only WARN and ERROR logs were collected
     const logs = logger.getCollectedLogs();
-    expect(logs.length).toBe(2);
-    expect(logs[0]).toMatch(/\[WARN\] Warning message/);
-    expect(logs[1]).toMatch(/\[ERROR\] Error message/);
+    expect(logs.length).toBe(0);
   });
   
-  it('should format complex objects and errors correctly', () => {
-    const testObject = { foo: 'bar', num: 42 };
-    const testError = new Error('Test error');
-    
-    logger.info('Object test', testObject);
-    logger.error('Error test', testError);
+  test('formats additional arguments correctly', () => {
+    const message = 'Test message with args:';
+    logger.info(message, 123, { key: 'value' });
     
     const logs = logger.getCollectedLogs();
-    expect(logs[0]).toMatch(/\[INFO\] Object test: {"foo":"bar","num":42}/);
-    expect(logs[1]).toMatch(/\[ERROR\] Error test: Test error/);
+    expect(logs.length).toBe(1);
+    expect(logs[0]).toContain(message);
+    expect(logs[0]).toContain('123');
+    expect(logs[0]).toContain('{"key":"value"}');
+  });
+  
+  test('clears logs correctly', () => {
+    logger.debug('First message');
+    logger.info('Second message');
+    expect(logger.getCollectedLogs().length).toBe(2);
+    
+    logger.clearLogs();
+    expect(logger.getCollectedLogs().length).toBe(0);
   });
 });

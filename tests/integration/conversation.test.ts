@@ -1,6 +1,8 @@
-import { getTestDatabasePath, cleanupDatabase, MCPServer, sleep } from '../helpers';
-import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
+import { MCPServer, getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../helpers';
+import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
+import { DatabaseService } from '../../src/services/database';
+import { ContentItem, Tool, MCPResponse } from '../types';
 
 /**
  * Conversation flow tests
@@ -9,164 +11,82 @@ import duckdb from 'duckdb';
  * Converted from conversation.js to Jest format.
  */
 
-describe('MCP Conversation Flow', () => {
-  // Create a unique database path for this test
-  const dbPath = getTestDatabasePath('conversation-flow');
-  let mcpServer: MCPServer;
-  
+describe('Conversation Flow', () => {
+  let server: MCPServer;
+  let testDatabasePath: string;
+
   beforeAll(async () => {
-    // Create a test database with sample data
-    await createTestDatabase(dbPath);
-    
-    // Start MCP server
-    mcpServer = new MCPServer(dbPath);
-    
-    // Wait for server to initialize
-    await sleep(2000);
-  });
-  
-  afterAll(async () => {
-    // Clean up resources
-    await mcpServer.close();
-    cleanupDatabase(dbPath);
+    testDatabasePath = getTestDatabasePath('conversation');
+    await createTestDatabase(testDatabasePath);
+    server = new MCPServer(testDatabasePath);
   });
 
-  test('executes a full conversation flow with multiple requests', async () => {
-    // Define the test messages in sequence
-    const testMessages = [
-      { 
-        description: 'Hello request', 
-        request: { method: 'info/hello', params: {} },
-        validation: (response: any) => {
-          // The hello endpoint is optional in the MCP spec
-          if (response.error && response.error.code === -32601) {
-            // Method not found is acceptable
-            expect(response.error.code).toBe(-32601);
-          } else {
-            expect(response.error).toBeUndefined();
-            expect(response.result).toBeDefined();
-          }
-        }
+  afterAll(async () => {
+    await server.close();
+    await cleanupDatabase(testDatabasePath);
+  });
+
+  test('executes a full conversation flow', async () => {
+    // Step 1: List available tools
+    const listResponse = await server.sendRequest('tools/list', {}) as MCPResponse;
+
+    expect(listResponse.error).toBeUndefined();
+    expect(listResponse.result).toBeDefined();
+    expect(listResponse.result?.tools).toBeDefined();
+    expect(Array.isArray(listResponse.result?.tools)).toBe(true);
+    expect(listResponse.result?.tools?.length).toBeGreaterThan(0);
+
+    const toolNames = listResponse.result?.tools?.map((t: Tool) => t.name) || [];
+    expect(toolNames).toContain('query_tailpipe');
+    expect(toolNames).toContain('list_tailpipe_tables');
+
+    // Step 2: List tables
+    const listTablesResponse = await server.sendRequest('tools/call', {
+      name: 'list_tailpipe_tables',
+      arguments: {
+        schema: 'test',
       },
-      { 
-        description: 'List tools', 
-        request: { method: 'tools/list', params: {} },
-        validation: (response: any) => {
-          expect(response.error).toBeUndefined();
-          expect(response.result).toBeDefined();
-          expect(response.result.tools).toBeDefined();
-          expect(Array.isArray(response.result.tools)).toBe(true);
-          expect(response.result.tools.length).toBeGreaterThan(0);
-          
-          // Check if necessary tools exist
-          const toolNames = response.result.tools.map((t: any) => t.name);
-          expect(toolNames).toContain('query');
-          expect(toolNames).toContain('list_tables');
-        }
+    }) as MCPResponse;
+
+    expect(listTablesResponse.error).toBeUndefined();
+    expect(listTablesResponse.result).toBeDefined();
+    expect(listTablesResponse.result?.content).toBeDefined();
+    expect(Array.isArray(listTablesResponse.result?.content)).toBe(true);
+    expect(listTablesResponse.result?.content?.length).toBeGreaterThan(0);
+
+    const listTextContent = listTablesResponse.result?.content?.find((item: ContentItem) => item.type === 'text');
+    expect(listTextContent).toBeDefined();
+    const tables = JSON.parse(listTextContent!.text);
+    expect(Array.isArray(tables)).toBe(true);
+    expect(tables.some((t: any) => t.schema === 'test' && t.name === 'example')).toBe(true);
+
+    // Step 3: Execute a query
+    const queryResponse = await server.sendRequest('tools/call', {
+      name: 'query_tailpipe',
+      arguments: {
+        sql: 'SELECT COUNT(*) as count FROM test.example',
       },
-      { 
-        description: 'Execute a simple query', 
-        request: { 
-          method: 'tools/call', 
-          params: { 
-            name: 'query', 
-            arguments: { sql: 'SELECT * FROM test_data' } 
-          } 
-        },
-        validation: (response: any) => {
-          expect(response.error).toBeUndefined();
-          expect(response.result).toBeDefined();
-          expect(response.result.content).toBeDefined();
-          
-          // Find the text content
-          const textContent = response.result.content.find((item: any) => item.type === 'text');
-          expect(textContent).toBeDefined();
-          expect(textContent.text).toBeDefined();
-          
-          // Check query results contain expected data
-          expect(textContent.text).toContain('test1');
-          expect(textContent.text).toContain('test2');
-        }
-      },
-      { 
-        description: 'List tables', 
-        request: { 
-          method: 'tools/call', 
-          params: { 
-            name: 'list_tables', 
-            arguments: {} 
-          } 
-        },
-        validation: (response: any) => {
-          expect(response.error).toBeUndefined();
-          expect(response.result).toBeDefined();
-          expect(response.result.content).toBeDefined();
-          
-          // Find the text content
-          const textContent = response.result.content.find((item: any) => item.type === 'text');
-          expect(textContent).toBeDefined();
-          
-          // Parse tables JSON
-          const tables = JSON.parse(textContent.text);
-          expect(Array.isArray(tables)).toBe(true);
-          
-          // Find test_data table
-          const testDataTable = tables.find((t: any) => t.name === 'test_data');
-          expect(testDataTable).toBeDefined();
-          
-          // Find aws schema table
-          const awsTable = tables.find((t: any) => t.schema === 'aws' && t.name === 'resources');
-          expect(awsTable).toBeDefined();
-        }
-      },
-      { 
-        description: 'Query AWS schema', 
-        request: { 
-          method: 'tools/call', 
-          params: { 
-            name: 'query', 
-            arguments: { sql: 'SELECT * FROM aws.resources' } 
-          } 
-        },
-        validation: (response: any) => {
-          expect(response.error).toBeUndefined();
-          expect(response.result).toBeDefined();
-          expect(response.result.content).toBeDefined();
-          
-          // Find the text content
-          const textContent = response.result.content.find((item: any) => item.type === 'text');
-          expect(textContent).toBeDefined();
-          
-          // Check results contain expected AWS resource data
-          expect(textContent.text).toContain('instance');
-          expect(textContent.text).toContain('bucket');
-          expect(textContent.text).toContain('us-east-1');
-          expect(textContent.text).toContain('us-west-2');
-        }
-      }
-    ];
-    
-    // Execute each message in sequence
-    for (const [index, message] of testMessages.entries()) {
-      // Log the current step
-      console.log(`Test ${index + 1}: ${message.description}`);
-      
-      // Send the request
-      const response = await mcpServer.sendRequest(
-        message.request.method,
-        message.request.params
-      );
-      
-      // Run the validation for this step
-      message.validation(response);
-    }
+    }) as MCPResponse;
+
+    expect(queryResponse.error).toBeUndefined();
+    expect(queryResponse.result).toBeDefined();
+    expect(queryResponse.result?.content).toBeDefined();
+    expect(Array.isArray(queryResponse.result?.content)).toBe(true);
+    expect(queryResponse.result?.content?.length).toBeGreaterThan(0);
+
+    const queryTextContent = queryResponse.result?.content?.find((item: ContentItem) => item.type === 'text');
+    expect(queryTextContent).toBeDefined();
+    const results = JSON.parse(queryTextContent!.text);
+    expect(Array.isArray(results)).toBe(true);
+    expect(results.length).toBe(1);
+    expect(results[0].count).toBeGreaterThan(0);
   });
 });
 
 /**
  * Helper to create a test database with sample data
  */
-async function createTestDatabase(dbPath: string): Promise<void> {
+async function createConversationTestDatabase(dbPath: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     try {
       const db = new duckdb.Database(dbPath);

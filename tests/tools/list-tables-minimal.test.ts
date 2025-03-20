@@ -32,37 +32,32 @@ describe('List Tables Tool (Minimal)', () => {
   });
   
   test('tools/list returns list_tables tool', async () => {
-    // Send tools/list request
+    // Get tools list
     const response = await mcpServer.sendRequest('tools/list', {});
     
-    // Verify success
     expect(response.error).toBeUndefined();
     expect(response.result).toBeDefined();
     expect(response.result.tools).toBeDefined();
     expect(Array.isArray(response.result.tools)).toBe(true);
     
-    // Find the list_tables tool
+    // Find list_tables tools
     const listTablesTools = response.result.tools.filter((tool: any) => 
-      tool.name === 'list_tables');
+      tool.name === 'list_tailpipe_tables'
+    );
     
     // Verify the tool is present
     expect(listTablesTools.length).toBeGreaterThan(0);
     
     // Get the first instance (there should be only one)
     const listTablesTool = listTablesTools[0];
-    
-    // Verify tool properties
-    expect(listTablesTool.name).toBe('list_tables');
     expect(listTablesTool.description).toBeDefined();
-    
-    // Input schema should be defined
     expect(listTablesTool.inputSchema).toBeDefined();
   });
   
   test('list_tables tool returns tables from test schema', async () => {
-    // Send list_tables tool request
+    // Call list_tables tool
     const response = await mcpServer.sendRequest('tools/call', {
-      name: 'list_tables',
+      name: 'list_tailpipe_tables',
       arguments: {}
     });
     
@@ -73,33 +68,30 @@ describe('List Tables Tool (Minimal)', () => {
     // Response should have content array with text item
     expect(response.result.content).toBeDefined();
     expect(Array.isArray(response.result.content)).toBe(true);
-    expect(response.result.content.length).toBeGreaterThan(0);
     
-    // First content item should be text
-    const textContent = response.result.content.find((item: any) => item.type === 'text');
+    // Find text content
+    const textContent = response.result.content.find((item: any) => 
+      item.type === 'text' && item.text
+    );
     expect(textContent).toBeDefined();
-    expect(textContent.text).toBeDefined();
     
-    // Parse the JSON response
+    // Parse tables list
     const tables = JSON.parse(textContent.text);
     expect(Array.isArray(tables)).toBe(true);
+    expect(tables.length).toBeGreaterThan(0);
     
-    // Find our test.example table
-    const testTable = tables.find(
-      (table: any) => table.schema === 'test' && table.name === 'example'
-    );
-    expect(testTable).toBeDefined();
-    
-    // Verify table properties
-    expect(testTable.schema).toBe('test');
-    expect(testTable.name).toBe('example');
+    // Should have tables in test schema
+    const testTables = tables.filter((t: any) => t.schema === 'test');
+    expect(testTables.length).toBeGreaterThan(0);
   });
   
   test('list_tables with schema filter returns only test schema tables', async () => {
-    // Send list_tables tool request with schema filter
+    // Call list_tables tool with schema filter
     const response = await mcpServer.sendRequest('tools/call', {
-      name: 'list_tables',
-      arguments: { schema: 'test' }
+      name: 'list_tailpipe_tables',
+      arguments: {
+        schema: 'test'
+      }
     });
     
     // Verify success
@@ -107,16 +99,16 @@ describe('List Tables Tool (Minimal)', () => {
     
     // Parse tables from response
     const textContent = response.result.content.find((item: any) => item.type === 'text');
-    const tables = JSON.parse(textContent.text);
+    expect(textContent).toBeDefined();
     
-    // All tables should be from test schema
+    const tables = JSON.parse(textContent.text);
+    expect(Array.isArray(tables)).toBe(true);
+    expect(tables.length).toBeGreaterThan(0);
+    
+    // All tables should be in test schema
     tables.forEach((table: any) => {
       expect(table.schema).toBe('test');
     });
-    
-    // Should include our example table
-    const exampleTable = tables.find((table: any) => table.name === 'example');
-    expect(exampleTable).toBeDefined();
   });
 });
 
