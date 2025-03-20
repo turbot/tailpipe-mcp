@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../src/services/database.js';
 import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../helpers';
+import { logger } from '../../src/services/logger.js';
 
 // Import the tools we want to test
 import { handleListTablesTool } from '../../src/tools/listTables.js';
@@ -54,9 +55,7 @@ describe('Tools Unit Tests', () => {
         expect(testTables.length).toBeGreaterThan(0);
         expect(testTables.some((t: any) => t.name === 'example')).toBe(true);
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(`Test failed: ${error.message}`);
-        }
+        logger.error(`Test failed: ${error instanceof Error ? error.message : String(error)}`);
         throw error;
       }
     });

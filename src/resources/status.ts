@@ -1,5 +1,6 @@
 import { DatabaseService } from "../services/database.js";
 import { execSync } from "child_process";
+import { logger } from '../services/logger.js';
 
 // Define a function to handle status resource requests
 export async function handleStatusResource(uri: string, db: DatabaseService): Promise<any | null> {
@@ -21,13 +22,12 @@ export async function handleStatusResource(uri: string, db: DatabaseService): Pr
     if (versionMatch && versionMatch[1]) {
       tailpipeVersion = versionMatch[1];
     } else {
-      console.error('Unexpected tailpipe version output format:', output);
+      logger.error('Unexpected tailpipe version output format:', output);
       tailpipeVersion = output.trim();
     }
-  } catch (error) {
+  } catch (err) {
     // Tailpipe CLI is not installed or failed to run
-    console.error('Error getting tailpipe version:', 
-      error instanceof Error ? error.message : String(error));
+    logger.error('Error getting tailpipe version:', err instanceof Error ? err.message : String(err));
     tailpipeVersion = 'Not installed or failed to run';
   }
   

@@ -2,6 +2,7 @@ import { ReadResourceRequestSchema, ListResourcesRequestSchema } from "@modelcon
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { DatabaseService } from "../services/database.js";
 import { handleStatusResource } from "./status.js";
+import { logger } from '../services/logger.js';
 
 export function setupResourceHandlers(server: Server, db: DatabaseService) {
   // Add resources/list handler
@@ -21,9 +22,9 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
     } catch (error) {
       // Log the error but don't fail - return default resources
       if (error instanceof Error) {
-        console.error("Critical error listing resources:", error.message);
+        logger.error("Critical error listing resources:", error.message);
       } else {
-        console.error("Critical error listing resources:", error);
+        logger.error("Critical error listing resources:", error);
       }
       
       // Provide at least the status resource

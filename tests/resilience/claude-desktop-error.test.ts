@@ -150,7 +150,7 @@ describe('Claude Desktop Error Regression Test', () => {
       
       process.stderr.on('data', (data) => {
         const stderr = data.toString().trim();
-        console.error(`Server stderr: ${stderr}`);
+        logger.error(`Server stderr: ${stderr}`);
       });
       
       // Wait for server to start
