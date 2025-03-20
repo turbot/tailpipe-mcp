@@ -1,8 +1,8 @@
 import { MCPServer, getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../setup/test-helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
-import { DatabaseService } from '../../src/services/database';
-import { ContentItem, Tool, MCPResponse } from '../types';
+import { DatabaseService } from '../../src/services/database.js';
+import { ContentItem, Tool, MCPResponse } from '../setup/test-types';
 
 /**
  * Conversation flow tests

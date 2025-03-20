@@ -4,8 +4,8 @@ import { mkdirSync, existsSync, unlinkSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import duckdb from 'duckdb';
-import { DatabaseService } from '../../src/services/database';
-import { ContentItem, MCPResponse } from '../types';
+import { DatabaseService } from '../../src/services/database.js';
+import { ContentItem, MCPResponse } from '../setup/test-types';
 
 /**
  * Tests for the reconnect tool

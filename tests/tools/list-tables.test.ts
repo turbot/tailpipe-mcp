@@ -1,7 +1,7 @@
 import { MCPServer } from '../setup/test-helpers';
 import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../setup/test-helpers';
-import { DatabaseService } from '../../src/services/database';
-import { ContentItem, MCPResponse } from '../types';
+import { DatabaseService } from '../../src/services/database.js';
+import { ContentItem, MCPResponse } from '../setup/test-types';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
 

@@ -1,8 +1,8 @@
 import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer, MCPResponse } from '../setup/test-helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
-import { DatabaseService } from '../../src/services/database';
-import { ContentItem } from '../types';
+import { DatabaseService } from '../../src/services/database.js';
+import { ContentItem } from '../setup/test-types';
 
 /**
  * Tests for the inspect tools: inspect_database, inspect_schema, inspect_table

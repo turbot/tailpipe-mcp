@@ -5,7 +5,10 @@ import { randomUUID } from 'crypto';
 import { unlinkSync, existsSync } from 'fs';
 import { Readable, Writable } from 'stream';
 import duckdb from 'duckdb';
-import { logger } from '../src/services/logger.js';
+import { logger } from '../../src/services/logger.js';
+import { DatabaseService } from '../../src/services/database.js';
+import { ContentItem } from './test-types';
+import type { MCPResponse as MCPResponseType } from './test-types';
 
 // Type augmentation for DuckDB Connection to add missing types from the connection object
 declare module 'duckdb' {
@@ -201,7 +204,7 @@ export class MCPServer {
       // Set a timeout to prevent hanging tests
       const timeoutId = setTimeout(() => {
         if (this.responseResolvers.has(id)) {
-          resolve({ error: { message: 'Request timed out' } });
+          resolve({ error: { code: -32000, message: 'Request timed out' } });
           this.responseResolvers.delete(id);
         }
       }, 5000);
@@ -225,7 +228,7 @@ export class MCPServer {
   async close(): Promise<void> {
     // Clean up any pending request resolvers
     for (const [id, resolver] of this.responseResolvers.entries()) {
-      resolver({ error: { message: 'Server closing' } });
+      resolver({ error: { code: -32001, message: 'Server closing' } });
     }
     this.responseResolvers.clear();
     

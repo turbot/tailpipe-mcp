@@ -6,16 +6,26 @@ export interface ContentItem {
 export interface Tool {
   name: string;
   description: string;
+  inputSchema?: any;
+  parameters?: any;
+}
+
+export interface ErrorResponse {
+  code: number;
+  message: string;
 }
 
 export interface MCPResponse {
-  error?: {
-    code: number;
-    message: string;
-  };
+  jsonrpc: string;
+  id?: string;
+  error?: ErrorResponse;
   result?: {
     content: ContentItem[];
-    isError?: boolean;
     tools?: Tool[];
+    resources?: any[];
+    connected?: boolean;
+    database_path?: string;
+    not_found?: boolean;
+    isError?: boolean;
   };
 } 

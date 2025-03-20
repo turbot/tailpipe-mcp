@@ -1,7 +1,7 @@
 import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer } from '../setup/test-helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
-import { DatabaseService } from '../../src/services/database';
-import { ContentItem, MCPResponse } from '../types';
+import { DatabaseService } from '../../src/services/database.js';
+import { ContentItem, MCPResponse } from '../setup/test-types';
 
 /**
  * Connection resilience tests for Tailpipe MCP
