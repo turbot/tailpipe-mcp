@@ -4,6 +4,7 @@ import { mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { createInterface } from 'readline';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
+import { logger } from '../../src/services/logger.js';
 
 // Extended timeout for the test - 30 seconds
 
@@ -55,60 +56,56 @@ describe('Claude Desktop Error Regression Test', () => {
   });
 
   afterAll(() => {
-    // Clean up database
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        console.log(`Removed temporary database: ${dbPath}`);
+        logger.info(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
-      console.error(`Warning: Could not remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
+      logger.error(`Failed to remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
 
   // Create a test database
   function createTestDatabase(): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log(`Creating test database at ${dbPath}...`);
-      
       try {
+        logger.info(`Creating test database at ${dbPath}...`);
+        
+        // Create a new DuckDB database
         const db = new duckdb.Database(dbPath);
         const conn = db.connect();
         
-        console.log('Creating test tables...');
+        logger.debug('Creating test tables...');
+        
+        // Create test tables and data
         conn.exec(`
-          -- Create a simple schema and tables
-          CREATE SCHEMA test_schema;
+          CREATE TABLE test_data (id INTEGER, name VARCHAR, value DOUBLE);
+          INSERT INTO test_data VALUES 
+            (1, 'test1', 10.5),
+            (2, 'test2', 20.5),
+            (3, 'test3', 30.5);
           
-          CREATE TABLE test_schema.users (
-            id INTEGER PRIMARY KEY,
-            username VARCHAR,
-            email VARCHAR
+          CREATE SCHEMA aws;
+          CREATE TABLE aws.test_resources (
+            id VARCHAR, 
+            region VARCHAR, 
+            type VARCHAR,
+            created_at TIMESTAMP
           );
-          
-          CREATE TABLE main.products (
-            id INTEGER PRIMARY KEY,
-            name VARCHAR,
-            price DOUBLE
-          );
-          
-          -- Insert some sample data
-          INSERT INTO test_schema.users VALUES 
-            (1, 'user1', 'user1@example.com'),
-            (2, 'user2', 'user2@example.com');
-            
-          INSERT INTO main.products VALUES
-            (1, 'Product A', 19.99),
-            (2, 'Product B', 29.99);
+          INSERT INTO aws.test_resources VALUES
+            ('r-1234', 'us-east-1', 'instance', '2023-01-01 12:00:00'),
+            ('r-5678', 'us-west-2', 'bucket', '2023-02-15 09:30:00');
         `, (err) => {
           if (err) {
             reject(err);
             return;
           }
           
+          // Close connection
           conn.close();
           db.close(() => {
-            console.log('Database created successfully');
+            logger.info('Database created successfully');
             resolve();
           });
         });
@@ -119,13 +116,13 @@ describe('Claude Desktop Error Regression Test', () => {
   }
 
   // Start MCP server and return process
-  function startMCPServer(): Promise<{
+  async function startMCPServer(): Promise<{
     process: ChildProcessWithoutNullStreams,
     responsePromise: Promise<any[]>
   }> {
+    logger.info('Starting MCP server...');
+    
     return new Promise((resolve) => {
-      console.log('Starting MCP server...');
-      
       const process = spawn('node', ['dist/index.js', dbPath], {
         stdio: ['pipe', 'pipe', 'pipe']
       });
@@ -175,6 +172,7 @@ describe('Claude Desktop Error Regression Test', () => {
           }, 10000);
         });
 
+        mcpProcess = process;
         resolve({ process, responsePromise });
       }, 1000);
     });
@@ -241,10 +239,9 @@ describe('Claude Desktop Error Regression Test', () => {
     
     // Start MCP server
     const { process, responsePromise } = await startMCPServer();
-    mcpProcess = process;
     
     // Simulate the Claude Desktop request sequence
-    await simulateClaudeDesktopSequence(mcpProcess);
+    await simulateClaudeDesktopSequence(process);
     
     // Wait for all responses to be received
     const responses = await responsePromise;

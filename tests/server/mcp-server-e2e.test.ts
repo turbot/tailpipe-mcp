@@ -4,6 +4,7 @@ import { join } from 'path';
 import duckdb from 'duckdb';
 import { randomUUID } from 'crypto';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
+import { LogLevel, logger } from '../../src/services/logger.js';
 
 // Create a temp directory for our test
 const testDir = join(process.cwd(), '.tmp-test');
@@ -13,6 +14,12 @@ describe('MCP Server E2E Tests', () => {
   let mcpProcess: ChildProcessWithoutNullStreams | null = null;
 
   beforeAll(async () => {
+    // Configure logger for tests
+    logger.configure({
+      level: LogLevel.ERROR, // Only show errors during tests
+      isTestEnvironment: true // Store logs in memory instead of printing
+    });
+    
     // Create test directory if it doesn't exist
     if (!existsSync(testDir)) {
       mkdirSync(testDir, { recursive: true });
@@ -20,7 +27,7 @@ describe('MCP Server E2E Tests', () => {
 
     // Create a unique database file path
     dbPath = join(testDir, `test-${randomUUID()}.db`);
-    console.log(`Creating test database at ${dbPath}`);
+    logger.debug(`Creating test database at ${dbPath}`);
 
     // Set up the test database
     await setupTestDatabase();
@@ -31,10 +38,10 @@ describe('MCP Server E2E Tests', () => {
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        console.log(`Removed temporary database: ${dbPath}`);
+        logger.debug(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
-      console.error(`Warning: Could not remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
+      logger.error(`Warning: Could not remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
 
@@ -106,7 +113,7 @@ describe('MCP Server E2E Tests', () => {
           // Close connection
           conn.close();
           db.close(() => {
-            console.log('Test database created successfully');
+            logger.debug('Test database created successfully');
             resolve();
           });
         });

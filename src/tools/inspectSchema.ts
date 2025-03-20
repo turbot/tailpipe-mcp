@@ -22,7 +22,7 @@ export const INSPECT_SCHEMA_TOOL = {
 
 export async function handleInspectSchemaTool(db: DatabaseService, args: { name: string; filter?: string }) {
   try {
-    logger.info(`[inspectSchema] Starting schema inspection for: ${args.name}`);
+    logger.debug(`[inspectSchema] Starting schema inspection for: ${args.name}`);
     
     // Get all tables in the schema
     const sql = `SELECT table_name 
@@ -32,7 +32,7 @@ export async function handleInspectSchemaTool(db: DatabaseService, args: { name:
     
     logger.debug(`[inspectSchema] Executing tables query SQL: ${sql}`);
     const tables = await db.executeQuery(sql);
-    logger.info(`[inspectSchema] Tables query result: ${JSON.stringify(tables)}`);
+    logger.debug(`[inspectSchema] Tables query result: ${JSON.stringify(tables)}`);
     
     // Filter tables if a filter is provided
     let filteredTables = tables;
@@ -41,10 +41,10 @@ export async function handleInspectSchemaTool(db: DatabaseService, args: { name:
       const filterPattern = args.filter.replace(/%/g, '.*').replace(/_/g, '.');
       const regex = new RegExp(filterPattern);
       filteredTables = tables.filter(t => regex.test(t.table_name));
-      logger.info(`[inspectSchema] After filtering: ${JSON.stringify(filteredTables)}`);
+      logger.debug(`[inspectSchema] After filtering: ${JSON.stringify(filteredTables)}`);
     }
     
-    logger.info(`[inspectSchema] Returning result: ${JSON.stringify(filteredTables)}`);
+    logger.debug(`[inspectSchema] Returning result: ${JSON.stringify(filteredTables)}`);
     return {
       content: [{ type: "text", text: JSON.stringify(filteredTables) }],
       isError: false,

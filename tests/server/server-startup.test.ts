@@ -3,6 +3,7 @@ import duckdb from 'duckdb';
 import { mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
+import { logger } from '../../src/services/logger.js';
 
 // This test verifies the MCP server can start up correctly with a valid database
 
@@ -40,10 +41,10 @@ describe('MCP Server Startup Test', () => {
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        console.log(`Removed temporary database: ${dbPath}`);
+        logger.info(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
-      console.error(`Warning: Could not remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
+      logger.error(`Failed to remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
 

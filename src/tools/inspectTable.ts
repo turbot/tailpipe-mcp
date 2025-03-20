@@ -23,7 +23,7 @@ export const INSPECT_TABLE_TOOL = {
 export async function handleInspectTableTool(db: DatabaseService, args: { name: string; schema?: string }) {
   const schema = args.schema || 'public';
   try {
-    logger.info(`[inspectTable] Starting table inspection for ${schema}.${args.name}`);
+    logger.debug(`[inspectTable] Starting table inspection for ${schema}.${args.name}`);
 
     // Get column information
     const sql = `SELECT column_name, data_type, is_nullable, column_default
@@ -34,9 +34,9 @@ export async function handleInspectTableTool(db: DatabaseService, args: { name: 
     
     logger.debug(`[inspectTable] Executing columns query SQL: ${sql}`);
     const columns = await db.executeQuery(sql);
-    logger.info(`[inspectTable] Columns query result: ${JSON.stringify(columns)}`);
+    logger.debug(`[inspectTable] Columns query result: ${JSON.stringify(columns)}`);
 
-    logger.info(`[inspectTable] Returning result: ${JSON.stringify(columns)}`);
+    logger.debug(`[inspectTable] Returning result: ${JSON.stringify(columns)}`);
     return {
       content: [{ type: "text", text: JSON.stringify(columns) }],
       isError: false,

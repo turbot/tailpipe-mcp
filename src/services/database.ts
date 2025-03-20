@@ -1,9 +1,13 @@
 import { SchemaInfo, TableInfo } from "../types/index.js";
-import type { Database as DuckDBDatabase, Connection as DuckDBConnection } from "duckdb";
 import { execSync } from "child_process";
 import { resolve } from "path";
 import { existsSync } from "fs";
 import { logger } from "./logger.js";
+import duckdb from 'duckdb';
+
+// Define types for DuckDB callback parameters
+type DuckDBError = Error | null;
+type DuckDBRow = Record<string, any>;
 
 /**
  * Get database path using Tailpipe CLI
@@ -47,8 +51,8 @@ export async function getDatabasePathFromTailpipe(): Promise<string> {
 }
 
 export class DatabaseService {
-  private db: DuckDBDatabase | null = null;
-  private connection: DuckDBConnection | null = null;
+  private db: any = null;
+  private connection: any = null;
   private initPromise: Promise<void>;
   private ready: boolean = false;
   public databasePath: string; // Changed to public to allow reconnection
@@ -70,53 +74,17 @@ export class DatabaseService {
     this.initAttempted = true;
     
     try {
-      // If we already have an active connection, close it first
-      if (this.connection) {
-        try {
-          this.connection.close();
-        } catch (e) {
-          // Ignore errors when closing existing connection
-        }
-        this.connection = null;
-      }
+      logger.debug(`Initializing database connection to: ${this.databasePath}`);
       
+      // Create database instance
+      this.db = new duckdb.Database(this.databasePath);
+      
+      // Create connection
       if (this.db) {
-        try {
-          await new Promise<void>((resolve) => {
-            this.db!.close((err) => {
-              // Ignore errors when closing
-              resolve();
-            });
-          });
-        } catch (e) {
-          // Ignore errors when closing existing database
-        }
-        this.db = null;
-      }
-      
-      this.ready = false;
-      
-      // Dynamic import for ESM compatibility
-      const duckdb = await import('duckdb');
-      
-      // Handle different module formats
-      let Database;
-      if (duckdb.default && typeof duckdb.default.Database === 'function') {
-        // ESM format with default export
-        Database = duckdb.default.Database;
-      } else if (typeof duckdb.Database === 'function') {
-        // CommonJS or direct export
-        Database = duckdb.Database;
+        this.connection = this.db.connect();
       } else {
-        logger.error('DuckDB module structure:', Object.keys(duckdb));
-        throw new Error('Could not find DuckDB Database constructor');
+        throw new Error('Failed to create database instance');
       }
-      
-      // Create a new database connection in read-only mode
-      this.db = new Database(this.databasePath, { 
-        access_mode: 'READ_ONLY'
-      });
-      this.connection = this.db.connect();
       
       // Run a test query to make sure the connection works
       await new Promise<void>((resolve, reject) => {
@@ -125,7 +93,7 @@ export class DatabaseService {
           return;
         }
         
-        this.connection.all('SELECT 1 as test', (err, rows) => {
+        this.connection.all('SELECT 1 as test', (err: DuckDBError, rows: DuckDBRow[]) => {
           if (err) {
             reject(new Error(`Database connection test failed: ${err.message}`));
           } else {
@@ -251,7 +219,7 @@ export class DatabaseService {
     return new Promise<void>((resolve, reject) => {
       // Use a very simple query that should work even if the database is mostly locked
       const startTime = Date.now();
-      this.connection!.all('SELECT 1 as test', (err, rows) => {
+      this.connection!.all('SELECT 1 as test', (err: DuckDBError, rows: DuckDBRow[]) => {
         const elapsed = Date.now() - startTime;
         
         if (err) {
@@ -364,7 +332,7 @@ export class DatabaseService {
         try {
           if (params && params.length > 0) {
             logger.debug(`Executing query with params: ${JSON.stringify(params)}`);
-            this.connection!.all(sql, params, (err: Error | null, rows: any[]) => {
+            this.connection!.all(sql, params, (err: DuckDBError, rows: DuckDBRow[]) => {
               if (err) {
                 logger.error(`Error executing parameterized query: ${err.message}`);
                 reject(err);
@@ -374,7 +342,7 @@ export class DatabaseService {
             });
           } else {
             logger.debug(`Executing query without params`);
-            this.connection!.all(sql, (err: Error | null, rows: any[]) => {
+            this.connection!.all(sql, (err: DuckDBError, rows: DuckDBRow[]) => {
               if (err) reject(err);
               else resolve(rows || []);
             });
@@ -451,7 +419,7 @@ export class DatabaseService {
             // Prevent the timeout from keeping the process alive
             closeTimeout.unref();
             
-            this.db!.close((err: Error | null) => {
+            this.db!.close((err: DuckDBError) => {
               clearTimeout(closeTimeout);
               if (err) {
                 logger.warn(`Error in db.close callback: ${err.message}`);

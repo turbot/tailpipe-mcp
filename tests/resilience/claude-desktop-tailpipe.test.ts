@@ -3,6 +3,7 @@ import { mkdirSync, existsSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { createInterface } from 'readline';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
+import { logger } from '../../src/services/logger.js';
 
 // Extended timeout for the test - 30 seconds
 
@@ -57,30 +58,28 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
     try {
       if (existsSync(dbPath)) {
         unlinkSync(dbPath);
-        console.log(`Removed temporary database: ${dbPath}`);
+        logger.info(`Removed temporary database: ${dbPath}`);
       }
     } catch (err) {
-      console.error(`Warning: Could not remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
+      logger.error(`Failed to remove temporary database: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
 
   // Create an invalid database file
   function createInvalidDatabaseFile(): void {
-    // Create a minimal but invalid database file
-    // The goal is to test that even with a broken DB file, the server 
-    // will still handle requests gracefully
-    writeFileSync(dbPath, Buffer.from('INVALID TAILPIPE DATABASE', 'utf8'));
-    console.log(`Created test file at ${dbPath}`);
+    // Create an invalid database file
+    writeFileSync(dbPath, 'This is not a valid DuckDB file');
+    logger.info(`Created test file at ${dbPath}`);
   }
 
   // Start MCP server and capture responses
-  function startMCPServer(): Promise<{
+  async function startMCPServer(): Promise<{
     process: ChildProcessWithoutNullStreams,
     responsesPromise: Promise<Record<string, any>>
   }> {
+    logger.info('Starting MCP server...');
+    
     return new Promise((resolve) => {
-      console.log('Starting MCP server...');
-      
       const process = spawn('node', ['dist/index.js', dbPath], {
         stdio: ['pipe', 'pipe', 'pipe']
       });
@@ -111,7 +110,7 @@ describe('Claude Desktop Tailpipe Resilience Test', () => {
       
       process.stderr.on('data', (data) => {
         const stderr = data.toString().trim();
-        console.error(`Server stderr: ${stderr}`);
+        logger.error(`Server stderr: ${stderr}`);
       });
       
       // Wait for server to start
