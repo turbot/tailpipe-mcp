@@ -1,4 +1,5 @@
 import { DatabaseService } from "../services/database.js";
+import { logger } from "../services/logger.js";
 
 export const INSPECT_SCHEMA_TOOL = {
   name: "inspect_tailpipe_schema",
@@ -21,43 +22,38 @@ export const INSPECT_SCHEMA_TOOL = {
 
 export async function handleInspectSchemaTool(db: DatabaseService, args: { name: string; filter?: string }) {
   try {
-    // Get all tables in the schema
-    const sql = `SELECT 
-                   table_name, 
-                   '' as description -- duckdb doesn't support table comments
-                 FROM 
-                   information_schema.tables
-                 WHERE 
-                   table_schema = ?
-                 ORDER BY 
-                   table_name`;
-                   
-    const allTables = await db.executeQuery(sql, [args.name]);
+    logger.info(`[inspectSchema] Starting schema inspection for: ${args.name}`);
     
-    // If filter is specified, filter the results in memory
-    let results = allTables;
+    // Get all tables in the schema
+    const sql = `SELECT table_name 
+                 FROM information_schema.tables 
+                 WHERE table_schema = '${args.name}'
+                 AND table_schema NOT IN ('information_schema')`;
+    
+    logger.debug(`[inspectSchema] Executing tables query SQL: ${sql}`);
+    const tables = await db.executeQuery(sql);
+    logger.info(`[inspectSchema] Tables query result: ${JSON.stringify(tables)}`);
+    
+    // Filter tables if a filter is provided
+    let filteredTables = tables;
     if (args.filter) {
-      // Convert SQL LIKE pattern to JS regex
-      const filterPattern = args.filter
-        .replace(/%/g, '.*')
-        .replace(/_/g, '.');
-        
-      console.error(`Filtering tables with regex: ${filterPattern}`);
-      
-      // Use regex to filter tables
-      const regex = new RegExp(filterPattern, 'i');
-      results = allTables.filter(table => regex.test(table.table_name));
-      
-      console.error(`Found ${results.length} tables matching filter pattern`);
+      logger.debug(`[inspectSchema] Applying filter: ${args.filter}`);
+      const filterPattern = args.filter.replace(/%/g, '.*').replace(/_/g, '.');
+      const regex = new RegExp(filterPattern);
+      filteredTables = tables.filter(t => regex.test(t.table_name));
+      logger.info(`[inspectSchema] After filtering: ${JSON.stringify(filteredTables)}`);
     }
-
+    
+    logger.info(`[inspectSchema] Returning result: ${JSON.stringify(filteredTables)}`);
     return {
-      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      content: [{ type: "text", text: JSON.stringify(filteredTables) }],
       isError: false,
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`[inspectSchema] Error occurred: ${errorMessage}`);
     return {
-      content: [{ type: "text", text: `Error inspecting schema: ${error instanceof Error ? error.message : String(error)}` }],
+      content: [{ type: "text", text: `Error inspecting schema: ${errorMessage}` }],
       isError: true,
     };
   }

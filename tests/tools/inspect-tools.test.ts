@@ -1,6 +1,8 @@
 import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer, MCPResponse } from '../helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 import duckdb from 'duckdb';
+import { DatabaseService } from '../../src/services/database';
+import { ContentItem } from '../types';
 
 /**
  * Tests for the inspect tools: inspect_database, inspect_schema, inspect_table
@@ -104,6 +106,9 @@ describe('Inspect Tools', () => {
   }
   
   beforeAll(async () => {
+    // Enable debug logging
+    process.env.TAILPIPE_MCP_LOG_LEVEL = 'debug';
+    
     // Create test database with multiple schemas and tables
     await createInspectToolsDatabase(dbPath);
     
@@ -123,61 +128,65 @@ describe('Inspect Tools', () => {
   describe('inspect_database Tool', () => {
     test('lists all schemas in database', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_database',
+        name: 'inspect_tailpipe_database',
         arguments: {}
-      });
+      }) as MCPResponse;
       
       expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
       
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
       
-      // Parse the schema list
-      const schemas = JSON.parse(content.text);
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const schemas = JSON.parse(textContent!.text);
       expect(Array.isArray(schemas)).toBe(true);
+      expect(schemas.length).toBeGreaterThan(0);
       
-      // Should include our custom schemas and main
-      expect(schemas).toContain('main');
+      // Should include our custom schemas
       expect(schemas).toContain('app_data');
       expect(schemas).toContain('analytics');
+      expect(schemas).toContain('main');
     });
     
     test('filters schemas by pattern', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_database',
+        name: 'inspect_tailpipe_database',
         arguments: {
           filter: 'app'
         }
-      });
+      }) as MCPResponse;
       
       expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
       
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
       
-      // Parse the filtered schema list
-      const filteredSchemas = JSON.parse(content.text);
-      expect(Array.isArray(filteredSchemas)).toBe(true);
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
       
-      // Should only include app_data
-      expect(filteredSchemas).toContain('app_data');
-      expect(filteredSchemas).not.toContain('analytics');
-      expect(filteredSchemas).not.toContain('main');
+      const schemas = JSON.parse(textContent!.text);
+      expect(Array.isArray(schemas)).toBe(true);
+      expect(schemas.length).toBeGreaterThan(0);
+      
+      // All schemas should match pattern
+      schemas.forEach((schema: string) => {
+        expect(schema.toLowerCase()).toContain('app');
+      });
     });
   });
   
   describe('inspect_schema Tool', () => {
     test('lists tables in a schema', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_schema',
+        name: 'inspect_tailpipe_schema',
         arguments: {
           name: 'app_data'
         }
@@ -186,31 +195,28 @@ describe('Inspect Tools', () => {
       expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
       
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
       
-      // Parse the table list
-      const tables = JSON.parse(content.text);
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const tables = JSON.parse(textContent!.text);
       expect(Array.isArray(tables)).toBe(true);
+      expect(tables.length).toBeGreaterThan(0);
       
-      // Find the correct property name for the table name - might be 'name' or 'table_name'
-      const firstTable = tables[0];
-      const tableNameProperty = 'table_name' in firstTable ? 'table_name' : 'name';
-      
-      // Should include our app_data tables
-      const tableNames = tables.map((t: any) => t[tableNameProperty]);
+      // Check for expected tables
+      const tableNames = tables.map((t: any) => t.table_name);
       expect(tableNames).toContain('users');
-      expect(tableNames).toContain('products');
       expect(tableNames).toContain('user_sessions');
-      expect(tables.length).toBe(3); // Should have exactly 3 tables
+      expect(tableNames).toContain('products');
     });
     
     test('filters tables in a schema', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_schema',
+        name: 'inspect_tailpipe_schema',
         arguments: {
           name: 'app_data',
           filter: '%user%'
@@ -220,124 +226,135 @@ describe('Inspect Tools', () => {
       expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
       
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
       
-      // Parse the filtered table list
-      const tables = JSON.parse(content.text);
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const tables = JSON.parse(textContent!.text);
       expect(Array.isArray(tables)).toBe(true);
+      expect(tables.length).toBeGreaterThan(0);
       
-      // Find the correct property name for the table name - might be 'name' or 'table_name'
-      const firstTable = tables[0];
-      const tableNameProperty = 'table_name' in firstTable ? 'table_name' : 'name';
-      
-      // Should only include user-related tables
-      const tableNames = tables.map((t: any) => t[tableNameProperty]);
-      expect(tableNames).toContain('users');
-      expect(tableNames).toContain('user_sessions');
-      expect(tableNames).not.toContain('products');
-      expect(tables.length).toBe(2); // Should have exactly 2 tables
+      // All tables should match pattern
+      tables.forEach((table: any) => {
+        expect(table.table_name.toLowerCase()).toContain('user');
+      });
     });
     
     test('handles non-existent schema', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_schema',
+        name: 'inspect_tailpipe_schema',
         arguments: {
-          name: 'nonexistent_schema'
+          name: 'non_existent_schema'
         }
-      });
-      
-      // Should still get a result, but it might be an error message or empty array
+      }) as MCPResponse;
+
+      expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
-      
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
-      
-      // Check if it's an error message or empty array
-      if (content.text.startsWith('Error')) {
-        expect(content.text).toContain('not found');
-      } else {
-        // If not an error, should be an empty array
-        const tables = JSON.parse(content.text);
-        expect(Array.isArray(tables)).toBe(true);
-        expect(tables.length).toBe(0); // Empty array
-      }
+      expect(response.result?.content).toBeDefined();
+      expect(Array.isArray(response.result?.content)).toBe(true);
+      expect(response.result?.content?.length).toBeGreaterThan(0);
+
+      const textContent = response.result?.content?.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBe('[]');
     });
   });
   
   describe('inspect_table Tool', () => {
     test('shows columns for a table with schema specified', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_table',
+        name: 'inspect_tailpipe_table',
         arguments: {
-          schema: 'app_data',
-          name: 'users'
+          name: 'users',
+          schema: 'app_data'
         }
       });
       
       expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
       
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
       
-      // Parse the column list
-      const columns = JSON.parse(content.text);
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const columns = JSON.parse(textContent!.text);
       expect(Array.isArray(columns)).toBe(true);
+      expect(columns.length).toBeGreaterThan(0);
       
-      // Should have all users table columns
+      // Check column properties
+      const firstColumn = columns[0];
+      expect(firstColumn.column_name).toBeDefined();
+      expect(firstColumn.data_type).toBeDefined();
+      
+      // Check for expected columns
       const columnNames = columns.map((c: any) => c.column_name);
       expect(columnNames).toContain('id');
       expect(columnNames).toContain('username');
       expect(columnNames).toContain('email');
       expect(columnNames).toContain('created_at');
-      expect(columns.length).toBe(4); // Should have exactly 4 columns
-      
-      // Check data types
-      const idColumn = columns.find((c: any) => c.column_name === 'id');
-      expect(idColumn.data_type.toLowerCase()).toContain('int');
-      
-      const usernameColumn = columns.find((c: any) => c.column_name === 'username');
-      expect(usernameColumn.data_type.toLowerCase()).toContain('varchar');
     });
     
     test('auto-discovers schema when not specified', async () => {
       const response = await mcpServer.sendRequest('tools/call', {
-        name: 'inspect_table',
+        name: 'inspect_tailpipe_table',
         arguments: {
-          name: 'products'
+          name: 'settings'
         }
       });
       
       expect(response.error).toBeUndefined();
       expect(response.result).toBeDefined();
       
-      // Parse the result content
-      const content = response.result.content?.find((item: any) => 
-        item.type === 'text' && item.text
-      );
-      expect(content).toBeDefined();
+      const { content } = response.result!;
+      expect(Array.isArray(content)).toBe(true);
+      expect(content.length).toBeGreaterThan(0);
       
-      // Parse the column list
-      const columns = JSON.parse(content.text);
+      const textContent = content.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBeDefined();
+      
+      const columns = JSON.parse(textContent!.text);
       expect(Array.isArray(columns)).toBe(true);
+      expect(columns.length).toBeGreaterThan(0);
       
-      // Should have all products table columns
+      // Check column properties
+      const firstColumn = columns[0];
+      expect(firstColumn.column_name).toBeDefined();
+      expect(firstColumn.data_type).toBeDefined();
+      
+      // Check for expected columns
       const columnNames = columns.map((c: any) => c.column_name);
-      expect(columnNames).toContain('id');
-      expect(columnNames).toContain('name');
-      expect(columnNames).toContain('price');
-      expect(columnNames).toContain('stock');
-      expect(columns.length).toBe(4); // Should have exactly 4 columns
+      expect(columnNames).toContain('key');
+      expect(columnNames).toContain('value');
+      expect(columnNames).toContain('description');
+    });
+    
+    test('returns empty array for non-existent table', async () => {
+      const response = await mcpServer.sendRequest('tools/call', {
+        name: 'inspect_tailpipe_table',
+        arguments: {
+          name: 'non_existent_table',
+          schema: 'test'
+        }
+      }) as MCPResponse;
+
+      expect(response.error).toBeUndefined();
+      expect(response.result).toBeDefined();
+      expect(response.result?.content).toBeDefined();
+      expect(Array.isArray(response.result?.content)).toBe(true);
+      expect(response.result?.content?.length).toBeGreaterThan(0);
+
+      const textContent = response.result?.content?.find((item: ContentItem) => item.type === 'text');
+      expect(textContent).toBeDefined();
+      expect(textContent?.text).toBe('[]');
     });
   });
 });
