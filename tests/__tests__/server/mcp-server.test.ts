@@ -1,4 +1,4 @@
-import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer } from '../helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer } from '../../setup/test-helpers';
 
 describe('MCP Server Integration Tests', () => {
   const dbPath = getTestDatabasePath('mcp-server');

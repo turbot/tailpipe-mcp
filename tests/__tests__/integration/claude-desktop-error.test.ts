@@ -5,7 +5,7 @@ import { join } from 'path';
 import { createInterface } from 'readline';
 import { describe, expect, test, beforeAll, afterAll, afterEach } from '@jest/globals';
 import { logger } from '../../src/services/logger.js';
-import { MCPServer } from '../helpers';
+import { MCPServer } from '../../setup/test-helpers';
 
 // Extended timeout for the test - 30 seconds
 

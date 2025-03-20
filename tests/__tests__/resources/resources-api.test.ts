@@ -1,4 +1,4 @@
-import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer } from '../helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase, MCPServer } from '../../setup/test-helpers';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 
 /**

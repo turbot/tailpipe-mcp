@@ -1,5 +1,5 @@
-import { MCPServer } from '../helpers';
-import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../helpers';
+import { MCPServer } from '../../setup/test-helpers';
+import { getTestDatabasePath, createTestDatabase, cleanupDatabase } from '../../setup/test-helpers';
 import { DatabaseService } from '../../src/services/database';
 import { ContentItem, MCPResponse } from '../types';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
