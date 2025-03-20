@@ -5,29 +5,27 @@
  * and supports suppressing logs during tests.
  */
 
-export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
-  SILENT = 4
-}
+type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 interface LoggerOptions {
-  level: LogLevel;
-  isTestEnvironment: boolean;
+  level?: LogLevel;
+  isTestEnvironment?: boolean;
 }
 
 class Logger {
-  private options: LoggerOptions;
+  private options: Required<LoggerOptions>;
   private logs: string[] = []; // Store logs when in test mode
 
-  constructor() {
-    // Default configuration
+  constructor(options: LoggerOptions = {}) {
+    const envLevel = (process.env.TAILPIPE_MCP_LOG_LEVEL || 'info').toLowerCase();
     this.options = {
-      level: this.getLogLevelFromEnv(),
-      isTestEnvironment: this.isRunningInTestEnv()
+      level: this.isValidLogLevel(envLevel) ? envLevel : 'info',
+      isTestEnvironment: options.isTestEnvironment || false
     };
+  }
+
+  private isValidLogLevel(level: string): level is LogLevel {
+    return ['debug', 'info', 'warn', 'error', 'silent'].includes(level);
   }
 
   /**
@@ -35,7 +33,6 @@ class Logger {
    */
   private isRunningInTestEnv(): boolean {
     return process.env.NODE_ENV === 'test' || 
-           process.env.SKIP_TAILPIPE_CLI === 'true' ||
            process.env.JEST_WORKER_ID !== undefined;
   }
 
@@ -43,16 +40,16 @@ class Logger {
    * Get log level from environment variable
    */
   private getLogLevelFromEnv(): LogLevel {
-    const envLevel = process.env.LOG_LEVEL?.toUpperCase();
+    const envLevel = process.env.TAILPIPE_MCP_LOG_LEVEL?.toUpperCase();
     
-    if (envLevel === 'DEBUG') return LogLevel.DEBUG;
-    if (envLevel === 'INFO') return LogLevel.INFO;
-    if (envLevel === 'WARN') return LogLevel.WARN;
-    if (envLevel === 'ERROR') return LogLevel.ERROR;
-    if (envLevel === 'SILENT') return LogLevel.SILENT;
+    if (envLevel === 'DEBUG') return 'debug';
+    if (envLevel === 'INFO') return 'info';
+    if (envLevel === 'WARN') return 'warn';
+    if (envLevel === 'ERROR') return 'error';
+    if (envLevel === 'SILENT') return 'silent';
     
     // Default level
-    return LogLevel.INFO;
+    return 'info';
   }
 
   /**
@@ -66,7 +63,7 @@ class Logger {
    * Debug level logging
    */
   debug(message: string, ...args: any[]): void {
-    if (this.options.level <= LogLevel.DEBUG) {
+    if (this.options.level === 'debug') {
       this.log('DEBUG', message, ...args);
     }
   }
@@ -75,7 +72,7 @@ class Logger {
    * Info level logging
    */
   info(message: string, ...args: any[]): void {
-    if (this.options.level <= LogLevel.INFO) {
+    if (this.options.level === 'info') {
       this.log('INFO', message, ...args);
     }
   }
@@ -84,7 +81,7 @@ class Logger {
    * Warning level logging
    */
   warn(message: string, ...args: any[]): void {
-    if (this.options.level <= LogLevel.WARN) {
+    if (this.options.level === 'warn') {
       this.log('WARN', message, ...args);
     }
   }
@@ -93,7 +90,7 @@ class Logger {
    * Error level logging
    */
   error(message: string, ...args: any[]): void {
-    if (this.options.level <= LogLevel.ERROR) {
+    if (this.options.level === 'error') {
       this.log('ERROR', message, ...args);
     }
   }

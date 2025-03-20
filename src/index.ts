@@ -12,7 +12,7 @@ import { logger } from "./services/logger.js";
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-const providedDatabasePath = args[0];
+const providedDatabasePath = args[0] || process.env.TAILPIPE_MCP_DATABASE_PATH;
 
 // Get the database path, either from command line or from Tailpipe CLI
 async function getDatabasePath(): Promise<string> {
@@ -28,13 +28,6 @@ async function getDatabasePath(): Promise<string> {
     return resolvedPath;
   }
   
-  // Skip Tailpipe CLI if environment variable is set (for testing purposes)
-  if (process.env.SKIP_TAILPIPE_CLI === 'true') {
-    logger.info('SKIP_TAILPIPE_CLI is set, not attempting to use Tailpipe CLI');
-    logger.info('Please provide a database path directly when SKIP_TAILPIPE_CLI is set');
-    process.exit(1);
-  }
-  
   // Otherwise, use the shared function to get the database path from Tailpipe CLI
   try {
     logger.info('No database path provided, attempting to use Tailpipe CLI...');
@@ -44,9 +37,6 @@ async function getDatabasePath(): Promise<string> {
     logger.error('Please install Tailpipe CLI or provide a database path directly.');
     process.exit(1);
   }
-  
-  // This line should never be reached due to the previous error handling
-  return '';
 }
 
 // Initialize database service

@@ -146,7 +146,7 @@ export class MCPServer {
     // Start server process
     this.serverProcess = spawn('node', ['dist/index.js', dbPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: {...process.env, SKIP_TAILPIPE_CLI: 'true'}
+      env: {...process.env}
     });
     
     // Create readline interface for line-by-line processing

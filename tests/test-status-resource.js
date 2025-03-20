@@ -55,7 +55,7 @@ async function testStatusResource() {
   // Start server process with explicit database path for consistent testing
   const serverProcess = spawn('node', ['dist/index.js', DB_PATH], {
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: {...process.env, SKIP_TAILPIPE_CLI: 'true'} // Skip CLI check
+    env: {...process.env} // Use default environment
   });
   
   // Create readline interface for line-by-line processing

@@ -13,7 +13,7 @@ import { logger } from "./logger.js";
 export async function getDatabasePathFromTailpipe(): Promise<string> {
   try {
     logger.info('Getting database path from Tailpipe CLI...');
-    if (process.env.DEBUG_TAILPIPE === 'true') {
+    if (process.env.TAILPIPE_MCP_DEBUG === 'true') {
       logger.debug('PATH environment variable:', process.env.PATH);
       logger.debug('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
     }
