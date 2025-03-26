@@ -20,12 +20,12 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Use lowercase for SQL keywords (e.g., 'select', 'from', 'where')
 
 2. Finding and Using Tables
-   - Use the list_tables tool to discover available tables to query
+   - Use the list_tailpipe_tables tool to discover available tables to query
    - Every table has a tp_timestamp column that can be used to limit the time range of queries
    - While using tp_timestamp is not required, it's helpful when querying logs to focus on relevant time periods
 
 3. Data Freshness
-   - Use the reconnect tool to get a new connection to Tailpipe with the latest data available
+   - Use the reconnect_tailpipe tool to get a new connection to Tailpipe with the latest data available
    - This is particularly useful when you need to ensure you're querying the most recent data
 
 Example query following these practices:
