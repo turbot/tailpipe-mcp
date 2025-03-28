@@ -114,17 +114,17 @@ This will automatically use the Tailpipe CLI to discover your database. If you w
 
 To install the Tailpipe MCP server in Cursor:
 
-1. Open your Cursor configuration file:
+1. Open your Cursor MCP configuration file:
    ```sh
-   open ~/.cursor/config.json  # On macOS
+   open ~/.cursor/mcp.json  # On macOS
    # or
-   code ~/.cursor/config.json  # Using VS Code
+   code ~/.cursor/mcp.json  # Using VS Code
    ```
 
 2. Add the following configuration to enable automatic database discovery using the Tailpipe CLI:
    ```json
    {
-     "mcps": {
+     "mcpServers": {
        "tailpipe": {
          "name": "Tailpipe",
          "description": "Query Tailpipe data",
@@ -137,7 +137,7 @@ To install the Tailpipe MCP server in Cursor:
    Alternatively, if you want to specify a database path explicitly:
    ```json
    {
-     "mcps": {
+     "mcpServers": {
        "tailpipe": {
          "name": "Tailpipe",
          "description": "Query Tailpipe data",
@@ -290,15 +290,14 @@ TAILPIPE_MCP_DATABASE_PATH=/path/to/db.db TAILPIPE_MCP_LOG_LEVEL=DEBUG node dist
 
 Replace `/path/to/your/workspace` with the absolute path to your local development directory. For example, if you cloned the repository to `~/src/tailpipe-mcp`, you would use `~/src/tailpipe-mcp/dist/index.js`.
 
-8. For local development with Cursor, update your `~/.cursor/config.json`:
+8. For local development with Cursor, update your `~/.cursor/mcp.json`:
 ```json
 {
-  "mcps": {
+  "mcpServers": {
     "tailpipe": {
       "name": "Tailpipe",
       "description": "Query Tailpipe data",
-      "server": "~/src/tailpipe-mcp/dist/index.js",
-      "args": ["/path/to/your/tailpipe.db"]
+      "command": "~/src/tailpipe-mcp/dist/index.js"
     }
   }
 }
