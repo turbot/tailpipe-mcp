@@ -50,6 +50,14 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
   - Show details of a specific Tailpipe table
   - Input: `name` (string): Name of the table to show details for
 
+- **plugin_list**
+  - List all available Tailpipe plugins
+  - No input parameters required
+
+- **plugin_show**
+  - Show details of a specific Tailpipe plugin
+  - Input: `name` (string): Name of the plugin to show details for
+
 ### Resource Templates
 
 The Tailpipe MCP includes resource templates that define how to interact with different types of resources. Currently supported resource types:
