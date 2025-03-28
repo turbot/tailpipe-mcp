@@ -2,7 +2,7 @@ import { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 
 export const BEST_PRACTICES_PROMPT = {
   name: "best_practices",
-  description: "Best practices for writing Tailpipe SQL queries",
+  description: "Best practices for working with Tailpipe data",
 } as const;
 
 export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
@@ -12,23 +12,34 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
         role: "user",
         content: {
           type: "text",
-          text: `When writing SQL queries for Tailpipe, follow these best practices:
+          text: `When working with Tailpipe data, follow these best practices:
 
-1. SQL Syntax and Style
+1. Exploring Available Data
+   - Use the partition_list tool to see all available data partitions
+   - Use the table_list tool to discover available tables
+   - Use the table_show tool to get detailed information about a specific table's structure
+   - These tools help you understand what data is available and how it's organized
+
+2. SQL Syntax and Style
    - Use DuckDB SQL syntax for all queries
    - Use 2 spaces for indentation in SQL queries
    - Use lowercase for SQL keywords (e.g., 'select', 'from', 'where')
+   - Use the query_tailpipe tool to execute your SQL queries
 
-2. Finding and Using Tables
-   - Use the list_tailpipe_tables tool to discover available tables to query
+3. Data Freshness and Connections
+   - Use the reconnect_tailpipe tool to get a new connection to Tailpipe with the latest data available
+   - This is particularly useful when you need to ensure you're querying the most recent data
    - Every table has a tp_timestamp column that can be used to limit the time range of queries
    - While using tp_timestamp is not required, it's helpful when querying logs to focus on relevant time periods
 
-3. Data Freshness
-   - Use the reconnect_tailpipe tool to get a new connection to Tailpipe with the latest data available
-   - This is particularly useful when you need to ensure you're querying the most recent data
+Example workflow:
+1. List available tables:
+   \`table_list\`
 
-Example query following these practices:
+2. Get details about a specific table:
+   \`table_show aws_s3_bucket\`
+
+3. Query the table:
 \`\`\`sql
 select
   bucket_name,
