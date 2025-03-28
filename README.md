@@ -34,28 +34,21 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
   - Run a read-only Tailpipe SQL query
   - Input: `sql` (string): The SQL query to execute
   
-- **list_tailpipe_tables**
-  - List available tables in the database
-  - Optional input: `schema` (string): Filter tables by schema name
-  - Optional input: `filter` (string): Filter tables by name pattern (e.g. '%ec2%')
-  
-- **inspect_tailpipe_database**
-  - List all schemas in the database
-  - Optional input: `filter` (string): Filter to apply to schema names
-  
-- **inspect_tailpipe_schema**
-  - List all tables in a schema
-  - Input: `name` (string): The schema name to inspect
-  - Optional input: `filter` (string): SQL ILIKE pattern to filter table names (e.g., '%aws_iam_%')
-  
-- **inspect_tailpipe_table**
-  - Get detailed information about a table including its columns
-  - Input: `name` (string): The name of the table to inspect
-  - Optional input: `schema` (string): Schema name to specify which table to inspect
-  
 - **reconnect_tailpipe**
   - Reconnect to the database, optionally using a new database path
   - Optional input: `database_path` (string): New database path to connect to
+
+- **partition_list**
+  - List all available Tailpipe partitions
+  - No input parameters required
+
+- **table_list**
+  - List all available Tailpipe tables
+  - No input parameters required
+
+- **table_show**
+  - Show details of a specific Tailpipe table
+  - Input: `name` (string): Name of the table to show details for
 
 ### Resource Templates
 
