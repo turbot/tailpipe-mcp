@@ -6,12 +6,16 @@ import { RECONNECT_TOOL, handleReconnectTool } from './reconnect.js';
 import { PARTITION_LIST_TOOL, handlePartitionListTool } from './partitionList.js';
 import { TABLE_LIST_TOOL, handleTableListTool } from './tableList.js';
 import { TABLE_SHOW_TOOL, handleTableShowTool } from './tableShow.js';
+import { PLUGIN_LIST_TOOL, handlePluginListTool } from './pluginList.js';
+import { PLUGIN_SHOW_TOOL, handlePluginShowTool } from './pluginShow.js';
 
 export * from './query.js';
 export * from './reconnect.js';
 export * from './partitionList.js';
 export * from './tableList.js';
 export * from './tableShow.js';
+export * from './pluginList.js';
+export * from './pluginShow.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -23,6 +27,8 @@ export function setupTools(server: Server, db: DatabaseService) {
         PARTITION_LIST_TOOL,
         TABLE_LIST_TOOL,
         TABLE_SHOW_TOOL,
+        PLUGIN_LIST_TOOL,
+        PLUGIN_SHOW_TOOL,
       ],
     };
   });
@@ -46,6 +52,12 @@ export function setupTools(server: Server, db: DatabaseService) {
 
       case TABLE_SHOW_TOOL.name:
         return handleTableShowTool(args as { name: string });
+
+      case PLUGIN_LIST_TOOL.name:
+        return handlePluginListTool();
+
+      case PLUGIN_SHOW_TOOL.name:
+        return handlePluginShowTool(args as { name: string });
 
       default:
         throw new Error(`Unknown tool: ${name}`);

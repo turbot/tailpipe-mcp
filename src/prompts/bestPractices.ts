@@ -18,6 +18,8 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Use the partition_list tool to see all available data partitions
    - Use the table_list tool to discover available tables
    - Use the table_show tool to get detailed information about a specific table's structure
+   - Use the plugin_list tool to see all available plugins
+   - Use the plugin_show tool to get detailed information about a specific plugin
    - These tools help you understand what data is available and how it's organized
 
 2. SQL Syntax and Style
@@ -33,10 +35,12 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - While using tp_timestamp is not required, it's helpful when querying logs to focus on relevant time periods
 
 Example workflow:
-1. List available tables:
+1. List available plugins and tables:
+   \`plugin_list\`
    \`table_list\`
 
-2. Get details about a specific table:
+2. Get details about specific resources:
+   \`plugin_show aws\`
    \`table_show aws_s3_bucket\`
 
 3. Query the table:
