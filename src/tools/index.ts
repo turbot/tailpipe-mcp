@@ -7,6 +7,9 @@ import { INSPECT_SCHEMA_TOOL, handleInspectSchemaTool } from './inspectSchema.js
 import { INSPECT_TABLE_TOOL, handleInspectTableTool } from './inspectTable.js';
 import { LIST_TABLES_TOOL, handleListTablesTool } from './listTables.js';
 import { RECONNECT_TOOL, handleReconnectTool } from './reconnect.js';
+import { PARTITION_LIST_TOOL, handlePartitionListTool } from './partitionList.js';
+import { TABLE_LIST_TOOL, handleTableListTool } from './tableList.js';
+import { TABLE_SHOW_TOOL, handleTableShowTool } from './tableShow.js';
 
 export * from './query.js';
 export * from './inspectDatabase.js';
@@ -14,6 +17,9 @@ export * from './inspectSchema.js';
 export * from './inspectTable.js';
 export * from './listTables.js';
 export * from './reconnect.js';
+export * from './partitionList.js';
+export * from './tableList.js';
+export * from './tableShow.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -26,6 +32,9 @@ export function setupTools(server: Server, db: DatabaseService) {
         INSPECT_SCHEMA_TOOL,
         INSPECT_TABLE_TOOL,
         RECONNECT_TOOL,
+        PARTITION_LIST_TOOL,
+        TABLE_LIST_TOOL,
+        TABLE_SHOW_TOOL,
       ],
     };
   });
@@ -52,6 +61,15 @@ export function setupTools(server: Server, db: DatabaseService) {
         
       case RECONNECT_TOOL.name:
         return handleReconnectTool(db, args as { database_path?: string });
+
+      case PARTITION_LIST_TOOL.name:
+        return handlePartitionListTool();
+
+      case TABLE_LIST_TOOL.name:
+        return handleTableListTool();
+
+      case TABLE_SHOW_TOOL.name:
+        return handleTableShowTool(args as { name: string });
 
       default:
         throw new Error(`Unknown tool: ${name}`);
