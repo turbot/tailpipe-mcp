@@ -10,6 +10,7 @@ import { PLUGIN_LIST_TOOL, handlePluginListTool } from './plugin_list.js';
 import { PLUGIN_SHOW_TOOL, handlePluginShowTool } from './plugin_show.js';
 import { SOURCE_LIST_TOOL, handleSourceListTool } from './source_list.js';
 import { SOURCE_SHOW_TOOL, handleSourceShowTool } from './source_show.js';
+import { PARTITION_SHOW_TOOL, handlePartitionShowTool } from './partition_show.js';
 
 export * from './query_tailpipe.js';
 export * from './reconnect.js';
@@ -20,6 +21,7 @@ export * from './plugin_list.js';
 export * from './plugin_show.js';
 export * from './source_list.js';
 export * from './source_show.js';
+export * from './partition_show.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -29,6 +31,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         QUERY_TOOL,
         RECONNECT_TOOL,
         PARTITION_LIST_TOOL,
+        PARTITION_SHOW_TOOL,
         TABLE_LIST_TOOL,
         TABLE_SHOW_TOOL,
         PLUGIN_LIST_TOOL,
@@ -70,6 +73,9 @@ export function setupTools(server: Server, db: DatabaseService) {
 
       case SOURCE_SHOW_TOOL.name:
         return handleSourceShowTool(args as { name: string });
+
+      case PARTITION_SHOW_TOOL.name:
+        return handlePartitionShowTool(args as { name: string });
 
       default:
         throw new Error(`Unknown tool: ${name}`);
