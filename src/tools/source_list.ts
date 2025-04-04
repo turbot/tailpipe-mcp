@@ -21,7 +21,7 @@ export async function handleSourceListTool() {
       // Parse the JSON output and remove columns if they exist
       const sources = JSON.parse(output);
       
-      // If the output is an array, ensure each source doesn't have columns
+      // If the output is an array, ensure each source doesn't have columns but keeps tags
       const processedSources = Array.isArray(sources) 
         ? sources.map(({ columns, ...sourceWithoutColumns }) => sourceWithoutColumns)
         : sources;
