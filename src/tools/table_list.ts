@@ -14,16 +14,21 @@ export async function handleTableListTool() {
   try {
     logger.debug('Executing table_list tool');
     
-    // Execute the tailpipe command
+    // Execute the tailpipe command with json output
     const output = execSync('tailpipe table list --output json', { encoding: 'utf-8' });
     
     try {
-      // Parse the JSON output to validate it
-      JSON.parse(output);
+      // Parse the JSON output and remove columns if they exist
+      const tables = JSON.parse(output);
       
-      // Return the raw output as it's already in JSON format
+      // If the output is an array, ensure each table doesn't have columns
+      const processedTables = Array.isArray(tables) 
+        ? tables.map(({ columns, ...tableWithoutColumns }) => tableWithoutColumns)
+        : tables;
+      
+      // Return the processed output
       return {
-        content: [{ type: "text", text: output }],
+        content: [{ type: "text", text: JSON.stringify(processedTables, null, 2) }],
         isError: false
       };
     } catch (parseError) {

@@ -3,19 +3,19 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { DatabaseService } from "../services/database.js";
 import { QUERY_TOOL, handleQueryTool } from './query.js';
 import { RECONNECT_TOOL, handleReconnectTool } from './reconnect.js';
-import { PARTITION_LIST_TOOL, handlePartitionListTool } from './partitionList.js';
-import { TABLE_LIST_TOOL, handleTableListTool } from './tableList.js';
-import { TABLE_SHOW_TOOL, handleTableShowTool } from './tableShow.js';
-import { PLUGIN_LIST_TOOL, handlePluginListTool } from './pluginList.js';
-import { PLUGIN_SHOW_TOOL, handlePluginShowTool } from './pluginShow.js';
+import { PARTITION_LIST_TOOL, handlePartitionListTool } from './partition_list.js';
+import { TABLE_LIST_TOOL, handleTableListTool } from './table_list.js';
+import { TABLE_SHOW_TOOL, handleTableShowTool } from './table_show.js';
+import { PLUGIN_LIST_TOOL, handlePluginListTool } from './plugin_list.js';
+import { PLUGIN_SHOW_TOOL, handlePluginShowTool } from './plugin_show.js';
 
 export * from './query.js';
 export * from './reconnect.js';
-export * from './partitionList.js';
-export * from './tableList.js';
-export * from './tableShow.js';
-export * from './pluginList.js';
-export * from './pluginShow.js';
+export * from './partition_list.js';
+export * from './table_list.js';
+export * from './table_show.js';
+export * from './plugin_list.js';
+export * from './plugin_show.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
