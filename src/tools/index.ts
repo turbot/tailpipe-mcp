@@ -9,6 +9,7 @@ import { TABLE_SHOW_TOOL, handleTableShowTool } from './table_show.js';
 import { PLUGIN_LIST_TOOL, handlePluginListTool } from './plugin_list.js';
 import { PLUGIN_SHOW_TOOL, handlePluginShowTool } from './plugin_show.js';
 import { SOURCE_LIST_TOOL, handleSourceListTool } from './source_list.js';
+import { SOURCE_SHOW_TOOL, handleSourceShowTool } from './source_show.js';
 
 export * from './query_tailpipe.js';
 export * from './reconnect.js';
@@ -18,6 +19,7 @@ export * from './table_show.js';
 export * from './plugin_list.js';
 export * from './plugin_show.js';
 export * from './source_list.js';
+export * from './source_show.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -32,6 +34,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         PLUGIN_LIST_TOOL,
         PLUGIN_SHOW_TOOL,
         SOURCE_LIST_TOOL,
+        SOURCE_SHOW_TOOL,
       ],
     };
   });
@@ -64,6 +67,9 @@ export function setupTools(server: Server, db: DatabaseService) {
 
       case SOURCE_LIST_TOOL.name:
         return handleSourceListTool();
+
+      case SOURCE_SHOW_TOOL.name:
+        return handleSourceShowTool(args as { name: string });
 
       default:
         throw new Error(`Unknown tool: ${name}`);
