@@ -1,21 +1,23 @@
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { DatabaseService } from "../services/database.js";
-import { QUERY_TOOL, handleQueryTool } from './query.js';
+import { QUERY_TOOL, handleQueryTool } from './query_tailpipe.js';
 import { RECONNECT_TOOL, handleReconnectTool } from './reconnect.js';
 import { PARTITION_LIST_TOOL, handlePartitionListTool } from './partition_list.js';
 import { TABLE_LIST_TOOL, handleTableListTool } from './table_list.js';
 import { TABLE_SHOW_TOOL, handleTableShowTool } from './table_show.js';
 import { PLUGIN_LIST_TOOL, handlePluginListTool } from './plugin_list.js';
 import { PLUGIN_SHOW_TOOL, handlePluginShowTool } from './plugin_show.js';
+import { SOURCE_LIST_TOOL, handleSourceListTool } from './source_list.js';
 
-export * from './query.js';
+export * from './query_tailpipe.js';
 export * from './reconnect.js';
 export * from './partition_list.js';
 export * from './table_list.js';
 export * from './table_show.js';
 export * from './plugin_list.js';
 export * from './plugin_show.js';
+export * from './source_list.js';
 
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
@@ -29,6 +31,7 @@ export function setupTools(server: Server, db: DatabaseService) {
         TABLE_SHOW_TOOL,
         PLUGIN_LIST_TOOL,
         PLUGIN_SHOW_TOOL,
+        SOURCE_LIST_TOOL,
       ],
     };
   });
@@ -58,6 +61,9 @@ export function setupTools(server: Server, db: DatabaseService) {
 
       case PLUGIN_SHOW_TOOL.name:
         return handlePluginShowTool(args as { name: string });
+
+      case SOURCE_LIST_TOOL.name:
+        return handleSourceListTool();
 
       default:
         throw new Error(`Unknown tool: ${name}`);
