@@ -21,7 +21,7 @@ export async function handleTableListTool() {
       // Parse the JSON output and remove columns if they exist
       const tables = JSON.parse(output);
       
-      // If the output is an array, ensure each table doesn't have columns
+      // If the output is an array, ensure each table doesn't have columns but keeps tags
       const processedTables = Array.isArray(tables) 
         ? tables.map(({ columns, ...tableWithoutColumns }) => tableWithoutColumns)
         : tables;
