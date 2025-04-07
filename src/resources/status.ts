@@ -57,18 +57,12 @@ export async function handleStatusResource(uri: string, db: DatabaseService): Pr
   };
   
   return {
-    result: {
-      name: "status",
-      type: "Status",
-      description: "Server status information",
-      uri: uri,
-      contents: [
-        {
-          uri: uri,
-          mimeType: "application/json",
-          text: JSON.stringify(content, null, 2)
-        }
-      ]
-    }
+    contents: [
+      {
+        uri: uri,
+        mimeType: "application/json",
+        text: JSON.stringify(content, null, 2)
+      }
+    ]
   };
 }
