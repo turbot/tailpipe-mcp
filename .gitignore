@@ -16,6 +16,7 @@ build/
 *.swo
 .DS_Store
 CLAUDE.md
+TODO.md
 
 # Environment variables
 .env
