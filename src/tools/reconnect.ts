@@ -18,6 +18,8 @@ export const RECONNECT_TOOL = {
 } as const;
 
 export async function handleReconnectTool(db: DatabaseService, args: { database_path?: string }) {
+  logger.debug('Executing reconnect_tailpipe tool');
+
   try {
     // Close the current connection first
     logger.info('Closing current database connection...');
@@ -36,13 +38,7 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
       // Verify the database exists
       if (!existsSync(newDatabasePath)) {
         logger.error(`Database file does not exist: ${newDatabasePath}`);
-        return {
-          content: [{ 
-            type: "text", 
-            text: `Error: Database file does not exist: ${newDatabasePath}` 
-          }],
-          isError: true
-        };
+        throw new Error(`Database file does not exist: ${newDatabasePath}`);
       }
     } else {
       // Check how the original database path was obtained
@@ -58,21 +54,10 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
         // Either it was originally from tailpipe or we don't know the source
         // so use tailpipe CLI to get a fresh connection
         logger.info('Using Tailpipe CLI for reconnection');
-        try {
-          // Get a fresh path from Tailpipe CLI
-          newDatabasePath = await getDatabasePathFromTailpipe();
-          source = 'tailpipe CLI connection';
-          logger.debug(`Reconnect: Got path from Tailpipe CLI: ${newDatabasePath}`);
-        } catch (error) {
-          logger.error('Failed to get database path from Tailpipe CLI', error);
-          return {
-            content: [{ 
-              type: "text", 
-              text: `Error: ${error instanceof Error ? error.message : String(error)}` 
-            }],
-            isError: true
-          };
-        }
+        // Get a fresh path from Tailpipe CLI
+        newDatabasePath = await getDatabasePathFromTailpipe();
+        source = 'tailpipe CLI connection';
+        logger.debug(`Reconnect: Got path from Tailpipe CLI: ${newDatabasePath}`);
       }
     }
     
@@ -81,52 +66,34 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
     // Update source type based on how we got the new path
     db.sourceType = source.includes('tailpipe') ? 'tailpipe' : 'cli-arg';
     
-    // Try to initialize the database connection
-    try {
-      logger.info(`Reconnecting to database: ${newDatabasePath}`);
-      
-      // Reinitialize database connection
-      await db.initializeDatabase();
-      
-      // Test the connection
-      await db.executeQuery("SELECT 1");
-      
-      logger.info(`Successfully reconnected to database: ${newDatabasePath}`);
-      
-      // If successful, return success message
-      return {
-        content: [{ 
-          type: "text", 
-          text: JSON.stringify({
-            success: true,
-            message: `Successfully reconnected to database`,
-            database: {
-              path: newDatabasePath,
-              source: source
-            },
-            status: "Connected"
-          }, null, 2)
-        }],
-        isError: false
-      };
-    } catch (error) {
-      logger.error(`Error reconnecting to database: ${newDatabasePath}`, error);
-      return {
-        content: [{ 
-          type: "text", 
-          text: `Error reconnecting to database: ${error instanceof Error ? error.message : String(error)}` 
-        }],
-        isError: true
-      };
-    }
-  } catch (error) {
-    logger.error('Error during reconnection process', error);
+    logger.info(`Reconnecting to database: ${newDatabasePath}`);
+    
+    // Reinitialize database connection
+    await db.initializeDatabase();
+    
+    // Test the connection
+    await db.executeQuery("SELECT 1");
+    
+    logger.info(`Successfully reconnected to database: ${newDatabasePath}`);
+    
+    // If successful, return success message
     return {
       content: [{ 
         type: "text", 
-        text: `Error during reconnection: ${error instanceof Error ? error.message : String(error)}` 
+        text: JSON.stringify({
+          success: true,
+          message: `Successfully reconnected to database`,
+          database: {
+            path: newDatabasePath,
+            source: source
+          },
+          status: "Connected"
+        }, null, 2)
       }],
-      isError: true
+      isError: false
     };
+  } catch (error) {
+    logger.error('Failed to execute reconnect_tailpipe tool:', error instanceof Error ? error.message : String(error));
+    throw error;
   }
 }
