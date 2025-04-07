@@ -27,8 +27,7 @@ export async function handleTableListTool() {
     
     // Return the processed output
     return {
-      content: [{ type: "text", text: JSON.stringify(processedTables, null, 2) }],
-      isError: false
+      content: [{ type: "text", text: JSON.stringify(processedTables, null, 2) }]
     };
   } catch (error) {
     logger.error('Failed to execute table_list tool:', error instanceof Error ? error.message : String(error));
