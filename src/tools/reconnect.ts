@@ -76,7 +76,7 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
     
     logger.info(`Successfully reconnected to database: ${newDatabasePath}`);
     
-    // If successful, return success message
+    // Return success message
     return {
       content: [{ 
         type: "text", 
@@ -89,8 +89,7 @@ export async function handleReconnectTool(db: DatabaseService, args: { database_
           },
           status: "Connected"
         }, null, 2)
-      }],
-      isError: false
+      }]
     };
   } catch (error) {
     logger.error('Failed to execute reconnect_tailpipe tool:', error instanceof Error ? error.message : String(error));
