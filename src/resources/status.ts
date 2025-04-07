@@ -32,13 +32,13 @@ export async function handleStatusResource(uri: string, db: DatabaseService): Pr
   }
   
   // Get connection status
-  let connectionStatus = "Unknown";
+  let connectionStatus = "unknown";
   try {
     // Try a simple query to test the connection
     await db.executeQuery("SELECT 1");
-    connectionStatus = "Connected";
+    connectionStatus = "connected";
   } catch (error) {
-    connectionStatus = "Disconnected";
+    connectionStatus = "disconnected";
   }
   
   // Prepare the status response
