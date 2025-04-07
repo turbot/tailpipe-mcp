@@ -1,4 +1,5 @@
 import { DatabaseService } from "../services/database.js";
+import { logger } from "../services/logger.js";
 
 export const QUERY_TOOL = {
   name: "query_tailpipe",
@@ -12,6 +13,8 @@ export const QUERY_TOOL = {
 } as const;
 
 export async function handleQueryTool(db: DatabaseService, args: { sql: string }) {
+  logger.debug('Executing query_tailpipe tool');
+
   try {
     // Execute the query
     const rows = await db.executeQuery(args.sql);
@@ -43,14 +46,7 @@ export async function handleQueryTool(db: DatabaseService, args: { sql: string }
       isError: false,
     };
   } catch (error) {
-    let errorMessage = "Query execution failed";
-    if (error instanceof Error) {
-      errorMessage = `Query execution failed: ${error.message}`;
-    }
-    
-    return {
-      content: [{ type: "text", text: errorMessage }],
-      isError: true,
-    };
+    logger.error('Failed to execute query_tailpipe tool:', error instanceof Error ? error.message : String(error));
+    throw error;
   }
 } 
