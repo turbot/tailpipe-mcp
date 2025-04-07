@@ -42,8 +42,7 @@ export async function handleQueryTool(db: DatabaseService, args: { sql: string }
     const resultText = JSON.stringify(processedRows, null, 2);
 
     return {
-      content: [{ type: "text", text: resultText }],
-      isError: false,
+      content: [{ type: "text", text: resultText }]
     };
   } catch (error) {
     logger.error('Failed to execute query_tailpipe tool:', error instanceof Error ? error.message : String(error));
