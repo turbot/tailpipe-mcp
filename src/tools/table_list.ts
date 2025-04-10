@@ -1,5 +1,6 @@
-import { execSync } from "child_process";
 import { logger } from "../services/logger.js";
+import { executeCommand, formatCommandError } from "../utils/command.js";
+import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 export const TABLE_LIST_TOOL = {
   name: "table_list",
@@ -13,9 +14,12 @@ export const TABLE_LIST_TOOL = {
 export async function handleTableListTool() {
   logger.debug('Executing table_list tool');
   
+  // Build the command
+  const cmd = buildTailpipeCommand('table list', { output: 'json' });
+  
   try {
-    // Execute the tailpipe command with json output
-    const output = execSync('tailpipe table list --output json', { encoding: 'utf-8' });
+    // Execute the tailpipe command
+    const output = executeCommand(cmd, { env: getTailpipeEnv() });
     
     // Parse the JSON output and remove columns if they exist
     const tables = JSON.parse(output);
@@ -31,6 +35,6 @@ export async function handleTableListTool() {
     };
   } catch (error) {
     logger.error('Failed to execute table_list tool:', error instanceof Error ? error.message : String(error));
-    throw error;
+    return formatCommandError(error, cmd);
   }
 } 

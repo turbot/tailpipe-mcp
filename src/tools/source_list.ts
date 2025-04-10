@@ -1,5 +1,6 @@
-import { execSync } from "child_process";
 import { logger } from "../services/logger.js";
+import { executeCommand, formatCommandError } from "../utils/command.js";
+import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 export const SOURCE_LIST_TOOL = {
   name: "source_list",
@@ -13,9 +14,12 @@ export const SOURCE_LIST_TOOL = {
 export async function handleSourceListTool() {
   logger.debug('Executing source_list tool');
   
+  // Build the command
+  const cmd = buildTailpipeCommand('source list', { output: 'json' });
+  
   try {
     // Execute the tailpipe command
-    const output = execSync('tailpipe source list --output json', { encoding: 'utf-8' });
+    const output = executeCommand(cmd, { env: getTailpipeEnv() });
     
     // Parse the JSON output and remove columns if they exist
     const sources = JSON.parse(output);
@@ -32,6 +36,6 @@ export async function handleSourceListTool() {
     };
   } catch (error) {
     logger.error('Failed to execute source_list tool:', error instanceof Error ? error.message : String(error));
-    throw error;
+    return formatCommandError(error, cmd);
   }
 } 

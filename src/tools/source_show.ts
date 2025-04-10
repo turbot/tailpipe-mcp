@@ -1,5 +1,6 @@
-import { execSync } from "child_process";
 import { logger } from "../services/logger.js";
+import { executeCommand, formatCommandError } from "../utils/command.js";
+import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 export const SOURCE_SHOW_TOOL = {
   name: "source_show",
@@ -14,11 +15,14 @@ export const SOURCE_SHOW_TOOL = {
 } as const;
 
 export async function handleSourceShowTool(args: { name: string }) {
+  logger.debug('Executing source_show tool');
+  
+  // Build the command
+  const cmd = buildTailpipeCommand(`source show "${args.name}"`, { output: 'json' });
+  
   try {
-    logger.debug('Executing source_show tool');
-    
     // Execute the tailpipe command
-    const output = execSync(`tailpipe source show "${args.name}" --output json`, { encoding: 'utf-8' });
+    const output = executeCommand(cmd, { env: getTailpipeEnv() });
     
     try {
       // Parse the JSON output to validate it
@@ -31,23 +35,10 @@ export async function handleSourceShowTool(args: { name: string }) {
       };
     } catch (parseError) {
       logger.error('Failed to parse Tailpipe source show output:', parseError instanceof Error ? parseError.message : String(parseError));
-      logger.error('Tailpipe output:', output);
-      return {
-        content: [{ 
-          type: "text", 
-          text: `Error parsing Tailpipe source show output: ${parseError instanceof Error ? parseError.message : String(parseError)}` 
-        }],
-        isError: true
-      };
+      return formatCommandError(parseError, cmd);
     }
   } catch (error) {
     logger.error('Failed to run Tailpipe source show command:', error instanceof Error ? error.message : String(error));
-    return {
-      content: [{ 
-        type: "text", 
-        text: `Error running Tailpipe source show command: ${error instanceof Error ? error.message : String(error)}` 
-      }],
-      isError: true
-    };
+    return formatCommandError(error, cmd);
   }
 } 

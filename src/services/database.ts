@@ -4,6 +4,8 @@ import { resolve } from "path";
 import { existsSync } from "fs";
 import { logger } from "./logger.js";
 import duckdb from 'duckdb';
+import { executeCommand } from "../utils/command.js";
+import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 // Define types for DuckDB callback parameters
 type DuckDBError = Error | null;
@@ -13,15 +15,16 @@ type DuckDBRow = Record<string, any>;
  * Get database path using Tailpipe CLI
  * @returns The resolved database path from Tailpipe CLI
  */
-
 export async function getDatabasePathFromTailpipe(): Promise<string> {
   try {
     logger.info('Getting database path from Tailpipe CLI...');
     if (process.env.TAILPIPE_MCP_DEBUG === 'true') {
       logger.debug('PATH environment variable:', process.env.PATH);
-      logger.debug('Which tailpipe:', execSync('which tailpipe || echo "not found"', { encoding: 'utf-8' }));
+      logger.debug('Which tailpipe:', executeCommand('which tailpipe || echo "not found"', { env: getTailpipeEnv() }));
     }
-    const output = execSync('tailpipe connect --output json', { encoding: 'utf-8' });
+    
+    const cmd = buildTailpipeCommand('connect', { output: 'json' });
+    const output = executeCommand(cmd, { env: getTailpipeEnv() });
     
     try {
       const result = JSON.parse(output);

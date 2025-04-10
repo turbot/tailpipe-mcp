@@ -1,5 +1,6 @@
-import { execSync } from "child_process";
 import { logger } from "../services/logger.js";
+import { executeCommand, formatCommandError } from "../utils/command.js";
+import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 export const PARTITION_LIST_TOOL = {
   name: "partition_list",
@@ -11,11 +12,14 @@ export const PARTITION_LIST_TOOL = {
 } as const;
 
 export async function handlePartitionListTool() {
+  logger.debug('Executing partition_list tool');
+  
+  // Build the command
+  const cmd = buildTailpipeCommand('partition list', { output: 'json' });
+  
   try {
-    logger.debug('Executing partition_list tool');
-    
     // Execute the tailpipe command
-    const output = execSync('tailpipe partition list --output json', { encoding: 'utf-8' });
+    const output = executeCommand(cmd, { env: getTailpipeEnv() });
     
     try {
       // Parse the JSON output to validate it
@@ -28,23 +32,10 @@ export async function handlePartitionListTool() {
       };
     } catch (parseError) {
       logger.error('Failed to parse Tailpipe partition list output:', parseError instanceof Error ? parseError.message : String(parseError));
-      logger.error('Tailpipe output:', output);
-      return {
-        content: [{ 
-          type: "text", 
-          text: `Error parsing Tailpipe partition list output: ${parseError instanceof Error ? parseError.message : String(parseError)}` 
-        }],
-        isError: true
-      };
+      return formatCommandError(parseError, cmd);
     }
   } catch (error) {
     logger.error('Failed to run Tailpipe partition list command:', error instanceof Error ? error.message : String(error));
-    return {
-      content: [{ 
-        type: "text", 
-        text: `Error running Tailpipe partition list command: ${error instanceof Error ? error.message : String(error)}` 
-      }],
-      isError: true
-    };
+    return formatCommandError(error, cmd);
   }
 } 

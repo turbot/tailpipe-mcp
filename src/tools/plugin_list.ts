@@ -1,5 +1,6 @@
-import { execSync } from "child_process";
 import { logger } from "../services/logger.js";
+import { executeCommand, formatCommandError } from "../utils/command.js";
+import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 export const PLUGIN_LIST_TOOL = {
   name: "plugin_list",
@@ -11,11 +12,14 @@ export const PLUGIN_LIST_TOOL = {
 } as const;
 
 export async function handlePluginListTool() {
+  logger.debug('Executing plugin_list tool');
+  
+  // Build the command
+  const cmd = buildTailpipeCommand('plugin list', { output: 'json' });
+  
   try {
-    logger.debug('Executing plugin_list tool');
-    
     // Execute the tailpipe command
-    const output = execSync('tailpipe plugin list --output json', { encoding: 'utf-8' });
+    const output = executeCommand(cmd, { env: getTailpipeEnv() });
     
     try {
       // Parse the JSON output to validate it
@@ -28,23 +32,10 @@ export async function handlePluginListTool() {
       };
     } catch (parseError) {
       logger.error('Failed to parse Tailpipe plugin list output:', parseError instanceof Error ? parseError.message : String(parseError));
-      logger.error('Tailpipe output:', output);
-      return {
-        content: [{ 
-          type: "text", 
-          text: `Error parsing Tailpipe plugin list output: ${parseError instanceof Error ? parseError.message : String(parseError)}` 
-        }],
-        isError: true
-      };
+      return formatCommandError(parseError, cmd);
     }
   } catch (error) {
     logger.error('Failed to run Tailpipe plugin list command:', error instanceof Error ? error.message : String(error));
-    return {
-      content: [{ 
-        type: "text", 
-        text: `Error running Tailpipe plugin list command: ${error instanceof Error ? error.message : String(error)}` 
-      }],
-      isError: true
-    };
+    return formatCommandError(error, cmd);
   }
 } 

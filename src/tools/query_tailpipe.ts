@@ -1,5 +1,6 @@
 import { DatabaseService } from "../services/database.js";
 import { logger } from "../services/logger.js";
+import { formatCommandError } from "../utils/command.js";
 
 export const QUERY_TOOL = {
   name: "query_tailpipe",
@@ -42,10 +43,11 @@ export async function handleQueryTool(db: DatabaseService, args: { sql: string }
     const resultText = JSON.stringify(processedRows, null, 2);
 
     return {
-      content: [{ type: "text", text: resultText }]
+      content: [{ type: "text", text: resultText }],
+      isError: false
     };
   } catch (error) {
     logger.error('Failed to execute query_tailpipe tool:', error instanceof Error ? error.message : String(error));
-    throw error;
+    return formatCommandError(error, `SQL Query: ${args.sql}`);
   }
 } 
