@@ -23,6 +23,20 @@ export * from './source_list.js';
 export * from './source_show.js';
 export * from './partition_show.js';
 
+// Export tools for server capabilities
+export const tools = {
+  QUERY_TOOL,
+  RECONNECT_TOOL,
+  PARTITION_LIST_TOOL,
+  PARTITION_SHOW_TOOL,
+  TABLE_LIST_TOOL,
+  TABLE_SHOW_TOOL,
+  PLUGIN_LIST_TOOL,
+  PLUGIN_SHOW_TOOL,
+  SOURCE_LIST_TOOL,
+  SOURCE_SHOW_TOOL,
+};
+
 export function setupTools(server: Server, db: DatabaseService) {
   // Register tool list handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {
