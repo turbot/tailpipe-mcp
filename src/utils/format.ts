@@ -13,4 +13,18 @@ export function validateAndFormat(output: string, cmd: string, resourceType: str
       }, null, 2)
     }]
   };
+}
+
+export function formatListResult<T>(items: T[], cmd: string, resourceType: string) {
+  return {
+    content: [{
+      type: "text",
+      text: JSON.stringify({
+        [resourceType]: items,
+        debug: {
+          command: cmd
+        }
+      }, null, 2)
+    }]
+  };
 } 
