@@ -3,6 +3,7 @@ import { DatabaseService, type DatabaseSourceType } from "../services/database.j
 import { logger } from "../services/logger.js";
 import { formatCommandError } from "../utils/command.js";
 import { validateAndFormat } from "../utils/format.js";
+import { buildTailpipeCommand } from "../utils/tailpipe.js";
 
 export const tool: Tool = {
   name: "reconnect_tailpipe",
@@ -36,20 +37,27 @@ export const tool: Tool = {
       // Close the temporary service
       await newDb.close();
       
-      const result = JSON.stringify({
-        success: true,
-        message: `Successfully reconnected to database`,
-        database: {
+      const result = {
+        connection: {
+          success: true,
           path: db.databasePath,
-          source: db.sourceType === 'tailpipe' ? 'tailpipe CLI connection' : 'provided argument',
+          source: db.sourceType === 'tailpipe' ? 'tailpipe CLI' : 'provided argument',
           status: "connected"
+        },
+        debug: {
+          command: buildTailpipeCommand(`connect ${args.database_path || ''}`)
         }
-      });
+      };
       
-      return validateAndFormat(result, 'reconnect', 'connection');
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(result)
+        }]
+      };
     } catch (error) {
       logger.error('Failed to execute reconnect_tailpipe tool:', error instanceof Error ? error.message : String(error));
-      return formatCommandError(error, 'reconnect');
+      return formatCommandError(error, 'reconnect_tailpipe');
     }
   }
 };
