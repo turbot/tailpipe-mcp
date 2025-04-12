@@ -19,17 +19,25 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
 
 ### Prompts
 
+The Tailpipe MCP includes a built-in prompt to help you work effectively with the data:
+
 - **best_practices**
   - Best practices for working with Tailpipe data
-  - Provides detailed guidance on:
-    - How to explore available data
-    - When to use specific tables
-    - Query structure and optimization
-    - Response formatting
-    - Performance considerations
+  - Provides guidance on:
+    - Using tools to explore available data (partition_list, table_list, etc.)
+    - SQL syntax and style conventions
+    - Data freshness and connection management
+    - Example workflow and queries
+
+You can load this prompt in Claude Desktop through the plug icon in the prompt window. The prompt will teach Claude how to:
+- Use the appropriate tools to explore and understand your data
+- Write efficient SQL queries using DuckDB syntax
+- Follow consistent formatting and style conventions
+- Work with data timestamps and freshness
 
 ### Tools
 
+Database Operations:
 - **query_tailpipe**
   - Run a read-only Tailpipe SQL query
   - Input: `sql` (string): The SQL query to execute
@@ -38,9 +46,14 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
   - Reconnect to the database, optionally using a new database path
   - Optional input: `database_path` (string): New database path to connect to
 
+Data Structure Operations:
 - **partition_list**
   - List all available Tailpipe partitions
   - No input parameters required
+
+- **partition_show**
+  - Show details of a specific Tailpipe partition
+  - Input: `name` (string): Name of the partition to show details for
 
 - **table_list**
   - List all available Tailpipe tables
@@ -50,6 +63,7 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
   - Show details of a specific Tailpipe table
   - Input: `name` (string): Name of the table to show details for
 
+Plugin Operations:
 - **plugin_list**
   - List all available Tailpipe plugins
   - No input parameters required
@@ -58,17 +72,34 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
   - Show details of a specific Tailpipe plugin
   - Input: `name` (string): Name of the plugin to show details for
 
-### Resource Templates
+Source Operations:
+- **source_list**
+  - List all available Tailpipe sources
+  - No input parameters required
 
-The Tailpipe MCP includes resource templates that define how to interact with different types of resources. Currently supported resource types:
+- **source_show**
+  - Show details of a specific Tailpipe source
+  - Input: `name` (string): Name of the source to show details for
 
-- **schema**
-  - Represents a Tailpipe schema
-  - Properties include name and tables
+### Resource Types
+
+The Tailpipe MCP provides access to several types of resources:
+
+- **Partitions**
+  - Represents a data partition in Tailpipe
+  - Properties include name, description, file count, file size, and associated plugin
   
-- **table**
+- **Tables**
   - Represents a Tailpipe table
-  - Properties include name, columns, and metadata
+  - Properties include name, description, file count, file size, and associated plugin
+
+- **Plugins**
+  - Represents a Tailpipe plugin
+  - Properties include name, version, and associated partitions
+
+- **Sources**
+  - Represents a Tailpipe data source
+  - Properties include name, description, and associated plugin
 
 Resource templates enable structured access to Tailpipe metadata, making it easier for AI tools to understand and navigate your data.
 

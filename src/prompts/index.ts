@@ -3,13 +3,15 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { BEST_PRACTICES_PROMPT, handleBestPracticesPrompt } from "./bestPractices.js";
 
 // Export prompts for server capabilities
-export const prompts = {};
+export const prompts = {
+  best_practices: BEST_PRACTICES_PROMPT
+};
 
 export function setupPrompts(server: Server) {
   // Register prompt list handler
   server.setRequestHandler(ListPromptsRequestSchema, async () => {
     return {
-      prompts: [],
+      prompts: [BEST_PRACTICES_PROMPT],
     };
   });
 
