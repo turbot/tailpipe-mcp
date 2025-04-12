@@ -1,5 +1,11 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
+export interface DatabaseConnection {
+  path: string;
+  source: string;
+  status: string;
+}
+
 export function validateAndFormat(output: string, cmd: string, resourceType: string) {
   // Just validate it's valid JSON
   const details = JSON.parse(output);
