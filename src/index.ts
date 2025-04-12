@@ -100,43 +100,25 @@ const server = new Server(
   }
 );
 
-// Store transport reference for cleanup
-let transport: StdioServerTransport;
-
 // Handle graceful shutdown
+// NOTE: we cannot do any logging here! doing so causes the MCP inspector
+// to crash when you refresh the browser, assumedly because we get an
+// invalid message format sent over the wire to it from this MCP server.
+// I couldn't use logger.{debug,info,error} at all, and it took ages to
+// find the cause of the crash.
 function setupShutdownHandlers(db: DatabaseService) {
   const gracefulShutdown = async () => {
-    logger.info("Shutting down MCP server...");
-
-    if (transport) {
-      try {
-        await transport.close();
-        logger.info("Transport connection closed");
-      } catch (error) {
-        logger.error(`Error closing transport: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
-
     if (db) {
       try {
         await db.close();
-        logger.info("Database connection closed");
       } catch (error) {
         logger.error(`Error closing database: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-
     process.exit(0);
   };
-
-  process.on('SIGTERM', () => {
-    logger.info("Received SIGTERM signal");
-    gracefulShutdown();
-  });
-  process.on('SIGINT', () => {
-    logger.info("Received SIGINT signal");
-    gracefulShutdown();
-  });
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 }
 
 // Start server
@@ -167,7 +149,7 @@ async function startServer() {
 
     // Connect transport
     logger.info("Initializing transport connection...");
-    transport = new StdioServerTransport();
+    const transport = new StdioServerTransport();
 
     // Connect to transport and handle any errors
     try {
