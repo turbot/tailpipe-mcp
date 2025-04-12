@@ -1,3 +1,5 @@
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+
 export function validateAndFormat(output: string, cmd: string, resourceType: string) {
   // Just validate it's valid JSON
   const details = JSON.parse(output);
@@ -15,16 +17,28 @@ export function validateAndFormat(output: string, cmd: string, resourceType: str
   };
 }
 
-export function formatListResult<T>(items: T[], cmd: string, resourceType: string) {
-  return {
+/**
+ * Formats a list result with debug information in a consistent way
+ * @param data The data to format (e.g. plugins, tables, partitions)
+ * @param key The key to use in the response object (e.g. "plugins", "tables", "partitions")
+ * @param cmd The command that was executed
+ * @returns A formatted tool response
+ */
+export function formatListResult<T>(data: T[], key: string, cmd: string): Promise<{
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+}> {
+  return Promise.resolve({
     content: [{
       type: "text",
       text: JSON.stringify({
-        [resourceType]: items,
+        [key]: data,
         debug: {
           command: cmd
         }
       }, null, 2)
     }]
-  };
+  });
 } 

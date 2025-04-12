@@ -1,40 +1,55 @@
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../services/logger.js";
 import { executeCommand, formatCommandError } from "../utils/command.js";
 import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
+import { formatListResult } from "../utils/format.js";
 
-export const TABLE_LIST_TOOL = {
+interface Table {
+  name: string;
+  description?: string;
+  local: {
+    file_count: number;
+    file_size: number;
+  };
+  plugin: string;
+}
+
+function parseTables(output: string): Table[] {
+  const rawTables = JSON.parse(output);
+  if (!Array.isArray(rawTables)) {
+    throw new Error('Expected array output from Tailpipe CLI');
+  }
+
+  return rawTables.map(table => ({
+    name: table.name || '',
+    ...(table.description && { description: table.description }),
+    local: {
+      file_count: table.local?.file_count || 0,
+      file_size: table.local?.file_size || 0
+    },
+    plugin: table.plugin || ''
+  }));
+}
+
+export const tool: Tool = {
   name: "table_list",
   description: "List all available Tailpipe tables",
   inputSchema: {
     type: "object",
     properties: {},
+    additionalProperties: false
+  },
+  handler: async () => {
+    logger.debug('Executing table_list tool');
+    const cmd = buildTailpipeCommand('table list', { output: 'json' });
+    
+    try {
+      const output = executeCommand(cmd, { env: getTailpipeEnv() });
+      const tables = parseTables(output);
+      return formatListResult(tables, 'tables', cmd);
+    } catch (error) {
+      logger.error('Failed to execute table_list tool:', error instanceof Error ? error.message : String(error));
+      return formatCommandError(error, cmd);
+    }
   }
-} as const;
-
-export async function handleTableListTool() {
-  logger.debug('Executing table_list tool');
-  
-  // Build the command
-  const cmd = buildTailpipeCommand('table list', { output: 'json' });
-  
-  try {
-    // Execute the tailpipe command
-    const output = executeCommand(cmd, { env: getTailpipeEnv() });
-    
-    // Parse the JSON output and remove columns if they exist
-    const tables = JSON.parse(output);
-    
-    // If the output is an array, ensure each table doesn't have columns but keeps tags
-    const processedTables = Array.isArray(tables) 
-      ? tables.map(({ columns, ...tableWithoutColumns }) => tableWithoutColumns)
-      : tables;
-    
-    // Return the processed output
-    return {
-      content: [{ type: "text", text: JSON.stringify(processedTables, null, 2) }]
-    };
-  } catch (error) {
-    logger.error('Failed to execute table_list tool:', error instanceof Error ? error.message : String(error));
-    return formatCommandError(error, cmd);
-  }
-} 
+}; 

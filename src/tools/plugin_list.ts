@@ -1,41 +1,47 @@
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../services/logger.js";
 import { executeCommand, formatCommandError } from "../utils/command.js";
 import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
+import { formatListResult } from "../utils/format.js";
 
-export const PLUGIN_LIST_TOOL = {
+interface Plugin {
+  Name: string;
+  Partitions: string[] | null;
+  Version: string;
+}
+
+function parsePlugins(output: string): Plugin[] {
+  const rawPlugins = JSON.parse(output);
+  if (!Array.isArray(rawPlugins)) {
+    throw new Error('Expected array output from Tailpipe CLI');
+  }
+
+  return rawPlugins.map(plugin => ({
+    Name: plugin.Name || '',
+    Partitions: Array.isArray(plugin.Partitions) ? plugin.Partitions : null,
+    Version: plugin.Version || ''
+  }));
+}
+
+export const tool: Tool = {
   name: "plugin_list",
   description: "List all available Tailpipe plugins",
   inputSchema: {
     type: "object",
     properties: {},
-  }
-} as const;
-
-export async function handlePluginListTool() {
-  logger.debug('Executing plugin_list tool');
-  
-  // Build the command
-  const cmd = buildTailpipeCommand('plugin list', { output: 'json' });
-  
-  try {
-    // Execute the tailpipe command
-    const output = executeCommand(cmd, { env: getTailpipeEnv() });
+    additionalProperties: false
+  },
+  handler: async () => {
+    logger.debug('Executing plugin_list tool');
+    const cmd = buildTailpipeCommand('plugin list', { output: 'json' });
     
     try {
-      // Parse the JSON output to validate it
-      JSON.parse(output);
-      
-      // Return the raw output as it's already in JSON format
-      return {
-        content: [{ type: "text", text: output }],
-        isError: false
-      };
-    } catch (parseError) {
-      logger.error('Failed to parse Tailpipe plugin list output:', parseError instanceof Error ? parseError.message : String(parseError));
-      return formatCommandError(parseError, cmd);
+      const output = executeCommand(cmd, { env: getTailpipeEnv() });
+      const plugins = parsePlugins(output);
+      return formatListResult(plugins, 'plugins', cmd);
+    } catch (error) {
+      logger.error('Failed to execute plugin_list tool:', error instanceof Error ? error.message : String(error));
+      return formatCommandError(error, cmd);
     }
-  } catch (error) {
-    logger.error('Failed to run Tailpipe plugin list command:', error instanceof Error ? error.message : String(error));
-    return formatCommandError(error, cmd);
   }
-} 
+}; 

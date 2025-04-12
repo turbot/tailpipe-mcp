@@ -1,41 +1,55 @@
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../services/logger.js";
 import { executeCommand, formatCommandError } from "../utils/command.js";
 import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
+import { formatListResult } from "../utils/format.js";
 
-export const PARTITION_LIST_TOOL = {
+interface Partition {
+  name: string;
+  description?: string;
+  local: {
+    file_count: number;
+    file_size: number;
+  };
+  plugin: string;
+}
+
+function parsePartitions(output: string): Partition[] {
+  const rawPartitions = JSON.parse(output);
+  if (!Array.isArray(rawPartitions)) {
+    throw new Error('Expected array output from Tailpipe CLI');
+  }
+
+  return rawPartitions.map(partition => ({
+    name: partition.name || '',
+    ...(partition.description && { description: partition.description }),
+    local: {
+      file_count: partition.local?.file_count || 0,
+      file_size: partition.local?.file_size || 0
+    },
+    plugin: partition.plugin || ''
+  }));
+}
+
+export const tool: Tool = {
   name: "partition_list",
   description: "List all available Tailpipe partitions",
   inputSchema: {
     type: "object",
     properties: {},
-  }
-} as const;
-
-export async function handlePartitionListTool() {
-  logger.debug('Executing partition_list tool');
-  
-  // Build the command
-  const cmd = buildTailpipeCommand('partition list', { output: 'json' });
-  
-  try {
-    // Execute the tailpipe command
-    const output = executeCommand(cmd, { env: getTailpipeEnv() });
+    additionalProperties: false
+  },
+  handler: async () => {
+    logger.debug('Executing partition_list tool');
+    const cmd = buildTailpipeCommand('partition list', { output: 'json' });
     
     try {
-      // Parse the JSON output to validate it
-      JSON.parse(output);
-      
-      // Return the raw output as it's already in JSON format
-      return {
-        content: [{ type: "text", text: output }],
-        isError: false
-      };
-    } catch (parseError) {
-      logger.error('Failed to parse Tailpipe partition list output:', parseError instanceof Error ? parseError.message : String(parseError));
-      return formatCommandError(parseError, cmd);
+      const output = executeCommand(cmd, { env: getTailpipeEnv() });
+      const partitions = parsePartitions(output);
+      return formatListResult(partitions, 'partitions', cmd);
+    } catch (error) {
+      logger.error('Failed to execute partition_list tool:', error instanceof Error ? error.message : String(error));
+      return formatCommandError(error, cmd);
     }
-  } catch (error) {
-    logger.error('Failed to run Tailpipe partition list command:', error instanceof Error ? error.message : String(error));
-    return formatCommandError(error, cmd);
   }
-} 
+}; 
