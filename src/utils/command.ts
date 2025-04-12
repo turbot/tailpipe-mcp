@@ -89,7 +89,7 @@ export function formatCommandError(error: unknown, context?: string): { isError:
     errorMessage = `Failed to parse Tailpipe CLI output: ${error.message}${context ? `. Command: ${context}` : ''}`;
   }
   // Command execution errors
-  else if (error instanceof Error && 'stderr' in error) {
+  else if (error instanceof Error && isCommandError(error)) {
     const cmdError = error as CommandError;
     const details = [
       cmdError.stderr && `Error: ${cmdError.stderr}`,
@@ -116,4 +116,15 @@ export function formatCommandError(error: unknown, context?: string): { isError:
       text: errorMessage
     }]
   };
+}
+
+// Type guard to check if an Error is a CommandError
+function isCommandError(error: Error): error is CommandError {
+  return (
+    'stderr' in error ||
+    'stdout' in error ||
+    'cmd' in error ||
+    'code' in error ||
+    'signal' in error
+  );
 } 
