@@ -173,11 +173,7 @@ export class DatabaseService {
           }
         }
         
-        // Verify connection with a simple test query
-        await this.testConnectionQuickly();
-        
         // If we reach here, connection is good
-        logger.debug(`Connection successfully verified on attempt ${retryCount+1}`);
         return;
       } catch (error) {
         lastError = error;
@@ -315,7 +311,10 @@ export class DatabaseService {
 
   async executeQuery(sql: string, params: any[] = [], retries = 1): Promise<any[]> {
     try {
-      await this.ensureConnection();
+      // Only ensure we have a connection, don't test it
+      if (!this.connection || !this.ready) {
+        await this.ensureConnection();
+      }
       
       if (!this.connection) {
         throw new Error('Database connection not initialized');
@@ -371,6 +370,7 @@ export class DatabaseService {
         
         // Force reconnection on next ensureConnection call
         this.ready = false;
+        this.connection = null;
         
         // Wait a moment before retrying to allow any transient issues to resolve
         await new Promise(resolve => setTimeout(resolve, 100));
