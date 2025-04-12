@@ -77,14 +77,13 @@ export const tool: Tool = {
       const { path: newDatabasePath, source } = await getDatabasePath(db, args.database_path);
       logger.debug(`Reconnect: Using database path: ${newDatabasePath} from ${source}`);
       
-      // Update the database path and source type
-      db.databasePath = newDatabasePath;
-      db.sourceType = source.includes('tailpipe') ? 'tailpipe' : 'cli-arg';
+      // Update the database path and reconnect
+      db.setDatabasePath(
+        newDatabasePath,
+        source.includes('tailpipe') ? 'tailpipe' : 'cli-arg'
+      );
       
-      logger.info(`Reconnecting to database: ${newDatabasePath}`);
-      
-      // Reinitialize and test connection
-      await db.initializeDatabase();
+      // Test the connection
       await db.executeQuery("SELECT 1");
       
       logger.info(`Successfully reconnected to database: ${newDatabasePath}`);
