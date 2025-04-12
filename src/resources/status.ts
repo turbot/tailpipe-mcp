@@ -1,6 +1,7 @@
 import { DatabaseService } from "../services/database.js";
 import { execSync } from "child_process";
 import { logger } from '../services/logger.js';
+import { getServerStartTime } from '../index.js';
 
 // Define a function to handle status resource requests
 export async function handleStatusResource(uri: string, db: DatabaseService): Promise<any | null> {
@@ -52,7 +53,7 @@ export async function handleStatusResource(uri: string, db: DatabaseService): Pr
     },
     mcp_server: {
       version: "0.1.0", // Matches the version in package.json
-      start_time: process.env.SERVER_START_TIME || new Date().toISOString()
+      start_time: getServerStartTime()
     }
   };
   

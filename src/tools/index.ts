@@ -4,7 +4,7 @@ import { DatabaseService } from "../services/database.js";
 
 // Database Operations
 import { tool as queryTool } from './query_tailpipe.js';
-import { tool as reconnectTool } from './reconnect.js';
+import { tool as reconnectTool } from './reconnect_tailpipe.js';
 
 // Data Structure Operations
 import { tool as partitionListTool } from './partition_list.js';

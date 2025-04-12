@@ -21,17 +21,8 @@ const SERVER_INFO = {
 const args = process.argv.slice(2);
 const providedDatabasePath = args[0] || process.env.TAILPIPE_MCP_DATABASE_PATH;
 
-// Create MCP server
-const server = new Server(
-  SERVER_INFO,
-  {
-    capabilities: {
-      tools,
-      prompts,
-      resources
-    }
-  }
-);
+// Track server start time
+let serverStartTime: string;
 
 // Handle graceful shutdown
 // NOTE: we cannot do any logging here! doing so causes the MCP inspector
@@ -59,8 +50,22 @@ async function startServer() {
   try {
     logger.info("Starting MCP server...");
     
-    // Initialize database
-    logger.info("Initializing database connection...");
+    // Record start time
+    serverStartTime = new Date().toISOString();
+    
+    // Create MCP server
+    const server = new Server(
+      SERVER_INFO,
+      {
+        capabilities: {
+          tools,
+          prompts,
+          resources
+        }
+      }
+    );
+    
+    // Initialize database connection
     const db = await DatabaseService.create(providedDatabasePath);
     logger.info("Database connection initialized successfully");
     
@@ -69,9 +74,7 @@ async function startServer() {
     setupShutdownHandlers(db);
     logger.info("Shutdown handlers configured");
 
-    // Record server start time for status resource
-    process.env.SERVER_START_TIME = new Date().toISOString();
-    logger.info(`Server start time recorded: ${process.env.SERVER_START_TIME}`);
+    logger.info(`Server started at: ${serverStartTime}`);
 
     // Set up handlers
     logger.info("Configuring server handlers...");
@@ -101,3 +104,8 @@ async function startServer() {
 }
 
 startServer();
+
+// Export for use in other modules
+export function getServerStartTime(): string {
+  return serverStartTime;
+}
