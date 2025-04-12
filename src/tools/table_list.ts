@@ -36,13 +36,8 @@ export const tool: Tool = {
   description: "List all available Tailpipe tables",
   inputSchema: {
     type: "object",
-    properties: {
-      random_string: {
-        type: "string",
-        description: "Dummy parameter for no-parameter tools"
-      }
-    },
-    required: ["random_string"]
+    properties: {},
+    additionalProperties: false
   },
   handler: async () => {
     logger.debug('Executing table_list tool');

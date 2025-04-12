@@ -38,13 +38,8 @@ export const tool: Tool = {
   description: "List all available Tailpipe sources",
   inputSchema: {
     type: "object",
-    properties: {
-      random_string: {
-        type: "string",
-        description: "Dummy parameter for no-parameter tools"
-      }
-    },
-    required: ["random_string"]
+    properties: {},
+    additionalProperties: false
   },
   handler: async () => {
     logger.debug('Executing source_list tool');
