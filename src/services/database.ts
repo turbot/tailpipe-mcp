@@ -79,8 +79,8 @@ export class DatabaseService {
     try {
       logger.debug(`Initializing database connection to: ${this.databasePath}`);
       
-      // Create database instance
-      this.db = new duckdb.Database(this.databasePath);
+      // Create database instance with read-only access
+      this.db = new duckdb.Database(this.databasePath, { access_mode: 'READ_ONLY' });
       
       // Create connection
       if (this.db) {
@@ -320,15 +320,6 @@ export class DatabaseService {
         throw new Error('Database connection not initialized');
       }
       
-      // Simple validation to prevent obvious harmful queries
-      const sqlLower = sql.toLowerCase();
-      if (sqlLower.includes('drop ') || 
-          sqlLower.includes('delete ') || 
-          sqlLower.includes('update ') || 
-          sqlLower.includes('insert ')) {
-        throw new Error('Write operations are not allowed through this interface');
-      }
-      
       // Execute the query
       const result = await new Promise<any[]>((resolve, reject) => {
         try {
@@ -385,10 +376,6 @@ export class DatabaseService {
       }
       throw error;
     }
-  }
-
-  async executeWriteQuery(sql: string, params: any[] = []): Promise<any[]> {
-    return this.executeQuery(sql, params);
   }
 
   async close(): Promise<void> {
