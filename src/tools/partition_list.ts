@@ -36,8 +36,13 @@ export const tool: Tool = {
   description: "List all available Tailpipe partitions",
   inputSchema: {
     type: "object",
-    properties: {},
-    additionalProperties: false
+    properties: {
+      random_string: {
+        type: "string",
+        description: "Dummy parameter for no-parameter tools"
+      }
+    },
+    required: ["random_string"]
   },
   handler: async () => {
     logger.debug('Executing partition_list tool');
