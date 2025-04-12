@@ -48,7 +48,7 @@ export const tool: Tool = {
     try {
       const output = executeCommand(cmd, { env: getTailpipeEnv() });
       const sources = parseSources(output);
-      return formatListResult(sources, cmd, 'sources');
+      return formatListResult(sources, 'sources', cmd);
     } catch (error) {
       logger.error('Failed to execute source_list tool:', error instanceof Error ? error.message : String(error));
       return formatCommandError(error, cmd);
