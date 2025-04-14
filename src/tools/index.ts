@@ -1,6 +1,8 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolRequest, type Tool, type ServerResult } from "@modelcontextprotocol/sdk/types.js";
 import { DatabaseService } from "../services/database.js";
+import Ajv from "ajv";
+import { logger } from "../services/logger.js";
 
 // Database Operations
 import { tool as queryTool } from './query_tailpipe.js';
@@ -19,6 +21,9 @@ import { tool as pluginShowTool } from './plugin_show.js';
 // Source Operations
 import { tool as sourceListTool } from './source_list.js';
 import { tool as sourceShowTool } from './source_show.js';
+
+// Initialize JSON Schema validator
+const ajv = new Ajv();
 
 // Export all tools for server capabilities
 export const tools = {
@@ -52,7 +57,7 @@ export function setupTools(server: Server, db: DatabaseService) {
 
   // Register tool handlers
   server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-    const { name, arguments: args } = request.params;
+    const { name, arguments: args = {} } = request.params;
     const tool = tools[name as keyof typeof tools];
 
     if (!tool) {
@@ -63,12 +68,27 @@ export function setupTools(server: Server, db: DatabaseService) {
       throw new Error(`Tool ${name} has no handler defined`);
     }
 
+    // Validate arguments against the tool's schema
+    if (tool.inputSchema) {
+      const validate = ajv.compile(tool.inputSchema);
+      if (!validate(args)) {
+        logger.error(`Invalid arguments for tool ${name}:`, validate.errors);
+        return {
+          isError: true,
+          content: [{
+            type: "text",
+            text: `Invalid arguments for tool ${name}: ${ajv.errorsText(validate.errors)}`
+          }]
+        };
+      }
+    }
+
     // Special handling for database-dependent tools
     if (name === 'query_tailpipe' || name === 'reconnect_tailpipe') {
-      return await (tool.handler as (db: DatabaseService, args: unknown) => Promise<ServerResult>)(db, args || {});
+      return await (tool.handler as (db: DatabaseService, args: unknown) => Promise<ServerResult>)(db, args);
     }
 
     // Standard tool handling
-    return await (tool.handler as (args: unknown) => Promise<ServerResult>)(args || {});
+    return await (tool.handler as (args: unknown) => Promise<ServerResult>)(args);
   });
 } 
