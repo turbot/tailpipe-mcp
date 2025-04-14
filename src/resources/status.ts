@@ -13,7 +13,7 @@ export const resource: Resource = {
     logger.debug('Handling status resource request');
     
     // Get the database path from the DatabaseService
-    const dbPath = (db as any).databasePath || 'Unknown';
+    const dbPath = db.databasePath || 'Unknown';
     
     // Get Tailpipe CLI version (when available)
     let tailpipeVersion = 'Not installed';
@@ -34,7 +34,7 @@ export const resource: Resource = {
     // Get connection status
     let connectionStatus = "unknown";
     try {
-      await (db as any).testConnection();
+      await db.testConnection();
       connectionStatus = "connected";
     } catch (error) {
       connectionStatus = "disconnected";
