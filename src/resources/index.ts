@@ -1,27 +1,30 @@
 import { ListResourcesRequestSchema, ReadResourceRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { DatabaseService } from "../services/database.js";
-import { handleStatusResource } from "./status.js";
+import { resource as statusResource } from "./status.js";
 import { logger } from '../services/logger.js';
+import type { Resource } from "../types/resource.js";
+
+// Register all available resources
+const resources: Resource[] = [
+  statusResource
+];
 
 // Export resources for server capabilities
-export const resources = {};
+export const resourceCapabilities = {
+  status: {
+    uri: statusResource.uri,
+    name: statusResource.name,
+    type: statusResource.type,
+    description: statusResource.description
+  }
+};
 
 export function setupResourceHandlers(server: Server, db: DatabaseService) {
   // Register resource list handler
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     try {
-      // Always include status resource
-      return { 
-        resources: [
-          {
-            uri: "tailpipe://status",
-            name: "status",
-            type: "Status",
-            description: "Server status information"
-          }
-        ] 
-      };
+      return { resources: Object.values(resourceCapabilities) };
     } catch (error) {
       // Log the error but don't fail - return default resources
       if (error instanceof Error) {
@@ -30,17 +33,8 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
         logger.error("Critical error listing resources:", error);
       }
       
-      // Provide at least the status resource
-      return { 
-        resources: [
-          {
-            uri: "tailpipe://status",
-            name: "status",
-            type: "Status",
-            description: "Server status information"
-          }
-        ] 
-      };
+      // Return empty list on error
+      return { resources: [] };
     }
   });
 
@@ -48,12 +42,13 @@ export function setupResourceHandlers(server: Server, db: DatabaseService) {
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const { uri } = request.params;
 
-    // Try each resource handler
-    const result = await handleStatusResource(uri, db);
-    if (result !== null) {
-      return result;
+    // Find matching resource
+    const resource = resources.find(r => r.uri === uri);
+    if (!resource) {
+      throw new Error(`Unknown resource: ${uri}`);
     }
 
-    throw new Error(`Unknown resource: ${uri}`);
+    // Handle the resource request
+    return resource.handler(db);
   });
 } 
