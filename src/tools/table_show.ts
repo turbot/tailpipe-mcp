@@ -18,8 +18,21 @@ export const tool: Tool = {
     required: ["name"],
     additionalProperties: false
   },
-  handler: async (args: { name: string }) => {
+  handler: async (args: { name?: string }) => {
     logger.debug('Executing table_show tool');
+
+    // Check if table name is provided
+    if (!args?.name) {
+      logger.error('Table name is required for table_show tool');
+      return {
+        isError: true,
+        content: [{
+          type: "text",
+          text: "Table name is required. Please provide a table name using the 'name' parameter."
+        }]
+      };
+    }
+
     const cmd = buildTailpipeCommand(`table show ${args.name}`, { output: 'json' });
     
     try {
