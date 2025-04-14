@@ -1,7 +1,7 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolRequest, type Tool, type ServerResult } from "@modelcontextprotocol/sdk/types.js";
 import { DatabaseService } from "../services/database.js";
-import Ajv from "ajv";
+import AjvModule from "ajv";
 import { logger } from "../services/logger.js";
 
 // Database Operations
@@ -23,6 +23,7 @@ import { tool as sourceListTool } from './source_list.js';
 import { tool as sourceShowTool } from './source_show.js';
 
 // Initialize JSON Schema validator
+const Ajv = AjvModule.default || AjvModule;
 const ajv = new Ajv();
 
 // Export all tools for server capabilities
