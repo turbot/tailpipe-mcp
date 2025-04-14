@@ -6,6 +6,7 @@ import { DatabaseService } from "./services/database.js";
 import { setupTools, tools } from "./tools/index.js";
 import { setupPromptHandlers, promptCapabilities } from "./prompts/index.js";
 import { setupResourceHandlers, resourceCapabilities } from "./resources/index.js";
+import { setupResourceTemplateHandlers, resourceTemplateCapabilities } from "./resourceTemplates/index.js";
 import { logger } from "./services/logger.js";
 
 // Server metadata
@@ -60,7 +61,8 @@ async function startServer() {
         capabilities: {
           tools,
           prompts: promptCapabilities.prompts,
-          resources: resourceCapabilities.resources
+          resources: resourceCapabilities.resources,
+          resourceTemplates: resourceTemplateCapabilities.resourceTemplates
         }
       }
     );
@@ -81,6 +83,7 @@ async function startServer() {
     setupTools(server, db);
     setupPromptHandlers(server);
     setupResourceHandlers(server, db);
+    setupResourceTemplateHandlers(server);
     logger.info("Server handlers configured");
 
     // Connect transport
