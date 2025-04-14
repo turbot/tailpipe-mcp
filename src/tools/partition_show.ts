@@ -10,7 +10,10 @@ export const tool: Tool = {
   inputSchema: {
     type: "object",
     properties: {
-      name: { type: "string" }
+      name: { 
+        type: "string",
+        description: "Name of the partition to show details for"
+      }
     },
     required: ["name"],
     additionalProperties: false

@@ -15,7 +15,8 @@ export const tool: Tool = {
         type: "string",
         description: "Optional new database path to connect to"
       }
-    }
+    },
+    additionalProperties: false
   },
   handler: async (db: DatabaseService, args: { database_path?: string }) => {
     logger.debug('Executing reconnect_tailpipe tool');
