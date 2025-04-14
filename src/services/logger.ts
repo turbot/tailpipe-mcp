@@ -36,22 +36,6 @@ export class Logger {
   }
 
   /**
-   * Get log level from environment variable
-   */
-  private getLogLevelFromEnv(): LogLevel {
-    const envLevel = process.env.TAILPIPE_MCP_LOG_LEVEL?.toUpperCase();
-    
-    if (envLevel === 'DEBUG') return LogLevel.DEBUG;
-    if (envLevel === 'INFO') return LogLevel.INFO;
-    if (envLevel === 'WARN') return LogLevel.WARN;
-    if (envLevel === 'ERROR') return LogLevel.ERROR;
-    if (envLevel === 'SILENT') return LogLevel.SILENT;
-    
-    // Default level
-    return LogLevel.INFO;
-  }
-
-  /**
    * Configure the logger
    */
   configure(options: Partial<LoggerOptions>): void {
