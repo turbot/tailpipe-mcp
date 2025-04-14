@@ -12,19 +12,21 @@ const resources: Resource[] = [
 
 // Export resources for server capabilities
 export const resourceCapabilities = {
-  status: {
-    uri: statusResource.uri,
-    name: statusResource.name,
-    type: statusResource.type,
-    description: statusResource.description
-  }
+  resources: Object.fromEntries(
+    resources.map(r => [r.name, {
+      uri: r.uri,
+      name: r.name,
+      type: r.type,
+      description: r.description
+    }])
+  )
 };
 
 export function setupResourceHandlers(server: Server, db: DatabaseService) {
   // Register resource list handler
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     try {
-      return { resources: Object.values(resourceCapabilities) };
+      return { resources: Object.values(resourceCapabilities.resources) };
     } catch (error) {
       // Log the error but don't fail - return default resources
       if (error instanceof Error) {
