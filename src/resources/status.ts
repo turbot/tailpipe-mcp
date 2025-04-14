@@ -1,7 +1,7 @@
 import { DatabaseService } from "../services/database.js";
-import { execSync } from "child_process";
 import { logger } from '../services/logger.js';
 import { getServerStartTime } from '../index.js';
+import { executeCommand } from '../utils/command.js';
 import type { Resource } from "../types/resource.js";
 
 export const resource: Resource = {
@@ -18,7 +18,7 @@ export const resource: Resource = {
     // Get Tailpipe CLI version (when available)
     let tailpipeVersion = 'Not installed';
     try {
-      const output = execSync('tailpipe --version', { encoding: 'utf-8' });
+      const output = executeCommand('tailpipe --version');
       const versionMatch = output.trim().match(/v?(\d+\.\d+(\.\d+)?)/i);
       if (versionMatch && versionMatch[1]) {
         tailpipeVersion = versionMatch[1];
