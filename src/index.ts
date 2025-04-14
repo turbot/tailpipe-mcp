@@ -4,7 +4,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { DatabaseService } from "./services/database.js";
 import { setupTools, tools } from "./tools/index.js";
-import { setupPrompts, prompts } from "./prompts/index.js";
+import { setupPromptHandlers, promptCapabilities } from "./prompts/index.js";
 import { setupResourceHandlers, resourceCapabilities } from "./resources/index.js";
 import { logger } from "./services/logger.js";
 
@@ -59,7 +59,7 @@ async function startServer() {
       {
         capabilities: {
           tools,
-          prompts,
+          prompts: promptCapabilities.prompts,
           resources: resourceCapabilities.resources
         }
       }
@@ -79,7 +79,7 @@ async function startServer() {
     // Set up handlers
     logger.info("Configuring server handlers...");
     setupTools(server, db);
-    setupPrompts(server);
+    setupPromptHandlers(server);
     setupResourceHandlers(server, db);
     logger.info("Server handlers configured");
 

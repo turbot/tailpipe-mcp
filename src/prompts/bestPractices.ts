@@ -1,18 +1,16 @@
-import { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
+import type { Prompt } from "../types/prompt.js";
 
-export const BEST_PRACTICES_PROMPT = {
+export const prompt: Prompt = {
   name: "best_practices",
   description: "Best practices for working with Tailpipe data",
-} as const;
-
-export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
-  return {
-    messages: [
-      {
-        role: "user",
-        content: {
-          type: "text",
-          text: `When working with Tailpipe data, follow these best practices:
+  handler: async () => {
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `When working with Tailpipe data, follow these best practices:
 
 1. Exploring Available Data
    - Use the partition_list tool to see all available data partitions
@@ -56,8 +54,9 @@ where
 order by
   tp_timestamp desc
 \`\`\``,
+          }
         }
-      }
-    ]
-  };
-} 
+      ]
+    };
+  }
+}; 
