@@ -14,9 +14,12 @@ export const tool: Tool = {
     type: "object",
     properties: {
       sql: {
-        type: "string"
+        type: "string",
+        description: "The SQL query to execute. Must use DuckDB SQL syntax and be read-only."
       }
-    }
+    },
+    required: ["sql"],
+    additionalProperties: false
   },
   handler: async (db: DatabaseService, args: { sql: string }) => {
     logger.debug('Executing query_tailpipe tool');
