@@ -33,7 +33,7 @@ function parseTables(output: string): Table[] {
 
 export const tool: Tool = {
   name: "table_list",
-  description: "List all available Tailpipe tables",
+  description: "List all available Tailpipe tables.",
   inputSchema: {
     type: "object",
     properties: {},

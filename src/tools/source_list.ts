@@ -35,7 +35,7 @@ function parseSources(output: string): Source[] {
 
 export const tool: Tool = {
   name: "source_list",
-  description: "List all available Tailpipe sources",
+  description: "List all Tailpipe sources available on the system.",
   inputSchema: {
     type: "object",
     properties: {},

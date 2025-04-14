@@ -6,7 +6,7 @@ import { validateAndFormat } from "../utils/format.js";
 
 export const tool: Tool = {
   name: "table_show",
-  description: "Show details of a specific Tailpipe table",
+  description: "Get detailed information about a specific Tailpipe table and its columns.",
   inputSchema: {
     type: "object",
     properties: {

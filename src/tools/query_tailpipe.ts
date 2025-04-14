@@ -4,7 +4,12 @@ import { DatabaseService } from "../services/database.js";
 
 export const tool: Tool = {
   name: "query_tailpipe",
-  description: "Run a read-only Tailpipe SQL query",
+  description: `Query cloud and security logs with SQL.
+  
+  Queries are read-only and must use DuckDB SQL syntax. 
+
+  Use table_list and table_show to discover available tables and columns.
+  `,
   inputSchema: {
     type: "object",
     properties: {

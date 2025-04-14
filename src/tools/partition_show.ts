@@ -6,7 +6,7 @@ import { validateAndFormat } from "../utils/format.js";
 
 export const tool: Tool = {
   name: "partition_show",
-  description: "Show details of a specific Tailpipe partition",
+  description: "Get details for a specific Tailpipe partition.",
   inputSchema: {
     type: "object",
     properties: {

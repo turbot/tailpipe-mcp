@@ -6,7 +6,7 @@ import { validateAndFormat } from "../utils/format.js";
 
 export const tool: Tool = {
   name: "source_show",
-  description: "Show details of a specific Tailpipe source",
+  description: "Get details for a specific Tailpipe source.",
   inputSchema: {
     type: "object",
     properties: {

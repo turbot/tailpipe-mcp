@@ -25,7 +25,7 @@ function parsePlugins(output: string): Plugin[] {
 
 export const tool: Tool = {
   name: "plugin_list",
-  description: "List all available Tailpipe plugins",
+  description: "List all Tailpipe plugins installed on the system.",
   inputSchema: {
     type: "object",
     properties: {},

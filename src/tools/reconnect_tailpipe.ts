@@ -7,7 +7,7 @@ import { buildTailpipeCommand } from "../utils/tailpipe.js";
 
 export const tool: Tool = {
   name: "reconnect_tailpipe",
-  description: "Reconnect to the database, optionally using a new database path",
+  description: "Reconnect to the Tailpipe database, optionally using a new database path.",
   inputSchema: {
     type: "object",
     properties: {
