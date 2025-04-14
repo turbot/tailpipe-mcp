@@ -15,6 +15,9 @@ describe('Tools Unit Tests', () => {
     
     // Wait for database to initialize
     await dbService.executeQuery('SELECT 1');
+    
+    // Test database connection
+    await dbService.testConnection();
   });
   
   afterAll(async () => {

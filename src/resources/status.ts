@@ -34,7 +34,7 @@ export const resource: Resource = {
     // Get connection status
     let connectionStatus = "unknown";
     try {
-      await db.executeQuery("SELECT 1");
+      await (db as any).testConnection();
       connectionStatus = "connected";
     } catch (error) {
       connectionStatus = "disconnected";

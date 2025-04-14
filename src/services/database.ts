@@ -147,7 +147,7 @@ export class DatabaseService {
   /**
    * Test the database connection with a simple query
    */
-  private async testConnection(): Promise<void> {
+  async testConnection(): Promise<void> {
     try {
       logger.info("Testing database connection...");
       await this.executeQuery("SELECT 1 as test");
