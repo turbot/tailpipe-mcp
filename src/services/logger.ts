@@ -36,14 +36,6 @@ export class Logger {
   }
 
   /**
-   * Determine if we're running in a test environment
-   */
-  private isRunningInTestEnv(): boolean {
-    return process.env.NODE_ENV === 'test' || 
-           process.env.JEST_WORKER_ID !== undefined;
-  }
-
-  /**
    * Get log level from environment variable
    */
   private getLogLevelFromEnv(): LogLevel {
