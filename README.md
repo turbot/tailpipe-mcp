@@ -179,42 +179,44 @@ Save the configuration file and restart Cursor for the changes to take effect.
 
 ## Prompting Guide
 
-### Best Practices
+First, run the `best_practices` prompt included in the MCP server to teach your LLM how best to work
+with Tailpipe. Then, ask anything!
 
-The Tailpipe MCP includes a pre-built `best_practices` prompt that teaches Claude how to work effectively with your cloud and security data. Running it before your own prompts will help Claude:
-
-- Understand how to explore available data using the Tailpipe tools
-- Write efficient DuckDB SQL queries
-- Follow consistent formatting and style conventions
-- Work with data timestamps and freshness
-
-In Claude Desktop, you can load this prompt through the plug icon in the prompt window.
-
-### Example Prompts
-
-Each prompt below is designed to work with Tailpipe's table structure, where each data source has its own tables. Here are some examples focusing on AWS CloudTrail and cost data:
-
+Explore the Tailpipe configuration:
 ```
-What tables are available for AWS CloudTrail data?
+What tables do we have available in Tailpipe?
 ```
 
+Simple, specific questions work well:
 ```
 Show me all S3 bucket creation events from CloudTrail in the last 24 hours
 ```
 
+Generate a report:
 ```
 What were my top 10 AWS services by cost last month?
 ```
 
+Dive into the details:
 ```
 Find any IAM users created outside working hours (9am-5pm) in the last week
+```
+
+Get information about specific situations:
+```
+Give me a timeline of the session where Venu created the IAM access key
+```
+
+Explore with wide ranging questions:
+```
+Analyze our cloudtrail errors for any specific security risks
 ```
 
 Remember to:
 - Be specific about the time period you're interested in
 - Mention the type of data you want to analyze (CloudTrail events, cost data, etc.)
 - Start with simple queries before adding complex conditions
-- Use natural language - Claude will handle the SQL translation
+- Use natural language - the LLM will handle the SQL translation
 
 ## Local Development
 
