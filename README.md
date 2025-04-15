@@ -63,6 +63,15 @@ Source Operations:
   - Get details for a specific Tailpipe source
   - Input: `name` (string): Name of the source to show details for
 
+Status Operations:
+- **status**
+  - Get the current status of the Tailpipe MCP server
+  - No input parameters required
+  - Returns information about:
+    - Connected database
+    - Server configuration
+    - Runtime environment
+
 ### Prompts
 
 The Tailpipe MCP includes a built-in prompt to help you work effectively with the data:
