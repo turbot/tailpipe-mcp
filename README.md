@@ -179,8 +179,7 @@ Save the configuration file and restart Cursor for the changes to take effect.
 
 ## Prompting Guide
 
-First, run the `best_practices` prompt included in the MCP server to teach your LLM how best to work
-with Tailpipe. Then, ask anything!
+First, run the `best_practices` prompt included in the MCP server to teach your LLM how best to work with Tailpipe. Then, ask anything!
 
 Explore the Tailpipe configuration:
 ```
@@ -217,6 +216,7 @@ Remember to:
 - Mention the type of data you want to analyze (CloudTrail events, cost data, etc.)
 - Start with simple queries before adding complex conditions
 - Use natural language - the LLM will handle the SQL translation
+- Be bold and open, it's amazing what the LLM with discover and achieve!
 
 ## Local Development
 
