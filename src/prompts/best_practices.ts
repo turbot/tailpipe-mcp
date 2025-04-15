@@ -27,7 +27,7 @@ export const prompt: Prompt = {
    - Use the tailpipe_query tool to execute your SQL queries
 
 3. Data Freshness and Connections
-   - Use the tailpipe_reconnect tool to get a new connection to Tailpipe with the latest data available
+   - Use the tailpipe_connect tool to get a new connection to Tailpipe with the latest data available
    - This is particularly useful when you need to ensure you're querying the most recent data
    - Every table has a tp_timestamp column that can be used to limit the time range of queries
    - While using tp_timestamp is not required, it's helpful when querying logs to focus on relevant time periods

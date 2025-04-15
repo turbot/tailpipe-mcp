@@ -6,20 +6,20 @@ import { validateAndFormat } from "../utils/format.js";
 import { buildTailpipeCommand } from "../utils/tailpipe.js";
 
 export const tool: Tool = {
-  name: "tailpipe_reconnect",
-  description: `Reconnect to the Tailpipe database, optionally using a new database path.`,
+  name: "tailpipe_connect",
+  description: "Connect to a Tailpipe database, optionally using a new database path.",
   inputSchema: {
     type: "object",
     properties: {
       database_path: {
         type: "string",
-        description: "Optional new database path to connect to"
+        description: "Optional database path to connect to"
       }
     },
     additionalProperties: false
   },
   handler: async (db: DatabaseService, args: { database_path?: string }) => {
-    logger.debug('Executing reconnect_tailpipe tool');
+    logger.debug('Executing connect_tailpipe tool');
 
     try {
       // Close the current connection first
@@ -57,8 +57,8 @@ export const tool: Tool = {
         }]
       };
     } catch (error) {
-      logger.error('Failed to execute reconnect_tailpipe tool:', error instanceof Error ? error.message : String(error));
-      return formatCommandError(error, 'reconnect_tailpipe');
+      logger.error('Failed to execute connect_tailpipe tool:', error instanceof Error ? error.message : String(error));
+      return formatCommandError(error, 'connect_tailpipe');
     }
   }
 };

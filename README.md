@@ -24,9 +24,9 @@ Database Operations:
   - Run a read-only Tailpipe SQL query using DuckDB syntax
   - Input: `sql` (string): The SQL query to execute
   
-- **reconnect_tailpipe**
-  - Reconnect to the database, optionally using a new database path
-  - Optional input: `database_path` (string): New database path to connect to
+- **connect_tailpipe**
+  - Connect to a Tailpipe database, optionally using a new database path
+  - Optional input: `database_path` (string): Database path to connect to
 
 Data Structure Operations:
 - **partition_list**

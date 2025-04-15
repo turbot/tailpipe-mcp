@@ -6,7 +6,7 @@ import { logger } from "../services/logger.js";
 
 // Database Operations
 import { tool as queryTool } from './tailpipe_query.js';
-import { tool as reconnectTool } from './tailpipe_reconnect.js';
+import { tool as connectTool } from './tailpipe_connect.js';
 
 // Data Structure Operations
 import { tool as partitionListTool } from './tailpipe_partition_list.js';
@@ -30,7 +30,7 @@ const ajv = new Ajv();
 export const tools = {
   // Database Operations
   tailpipe_query: queryTool,          // Core database query functionality
-  tailpipe_reconnect: reconnectTool,  // Database connection management
+  tailpipe_connect: connectTool,      // Database connection management
 
   // Data Structure Operations
   tailpipe_partition_list: partitionListTool,  // List available partitions
@@ -104,7 +104,7 @@ export function setupTools(server: Server, db: DatabaseService) {
     }
 
     // Special handling for database-dependent tools
-    if (name === 'tailpipe_query' || name === 'tailpipe_reconnect') {
+    if (name === 'tailpipe_query' || name === 'tailpipe_connect') {
       return await (tool.handler as (db: DatabaseService, args: unknown) => Promise<ServerResult>)(db, args);
     }
 
