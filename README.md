@@ -20,51 +20,51 @@ Connects directly to your local Tailpipe database file, giving you AI access to 
 ### Tools
 
 Database Operations:
-- **query_tailpipe**
+- **tailpipe_query**
   - Run a read-only Tailpipe SQL query using DuckDB syntax
   - Input: `sql` (string): The SQL query to execute
   
-- **connect_tailpipe**
+- **tailpipe_connect**
   - Refresh the Tailpipe database connection to get the latest data, or connect to a different database path
   - Optional input: `database_path` (string): Database path to connect to. If not provided, refreshes the current connection.
 
 Data Structure Operations:
-- **partition_list**
+- **tailpipe_partition_list**
   - List all available Tailpipe partitions with simple statistics
   - No input parameters required
 
-- **partition_show**
+- **tailpipe_partition_show**
   - Show details of a specific Tailpipe partition
   - Input: `name` (string): Name of the partition to show details for
 
-- **table_list**
+- **tailpipe_table_list**
   - List all available Tailpipe tables
   - No input parameters required
 
-- **table_show**
+- **tailpipe_table_show**
   - Show details of a specific Tailpipe table and its columns
   - Input: `name` (string): Name of the table to show details for
 
 Plugin Operations:
-- **plugin_list**
+- **tailpipe_plugin_list**
   - List all Tailpipe plugins installed on the system
   - No input parameters required
 
-- **plugin_show**
+- **tailpipe_plugin_show**
   - Get details for a specific Tailpipe plugin installation
   - Input: `name` (string): Name of the plugin to show details for
 
 Source Operations:
-- **source_list**
+- **tailpipe_source_list**
   - List all Tailpipe sources available on the system
   - No input parameters required
 
-- **source_show**
+- **tailpipe_source_show**
   - Get details for a specific Tailpipe source
   - Input: `name` (string): Name of the source to show details for
 
 Status Operations:
-- **status**
+- **tailpipe_status**
   - Get the current status of the Tailpipe MCP server
   - No input parameters required
   - Returns information about:
