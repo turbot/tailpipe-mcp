@@ -25,8 +25,8 @@ Database Operations:
   - Input: `sql` (string): The SQL query to execute
   
 - **connect_tailpipe**
-  - Connect to a Tailpipe database, optionally using a new database path
-  - Optional input: `database_path` (string): Database path to connect to
+  - Refresh the Tailpipe database connection to get the latest data, or connect to a different database path
+  - Optional input: `database_path` (string): Database path to connect to. If not provided, refreshes the current connection.
 
 Data Structure Operations:
 - **partition_list**
