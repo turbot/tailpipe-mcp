@@ -92,6 +92,11 @@ You can load this prompt in Claude Desktop through the plug icon in the prompt w
 
 ## Installation
 
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v16 or higher (includes `npx`)
+- [Tailpipe](https://tailpipe.io/downloads) installed and configured
+
 ### Claude Desktop
 
 [How to use MCP servers with Claude Desktop →](https://modelcontextprotocol.io/quickstart/user)
@@ -105,14 +110,16 @@ Add the following configuration to the "mcpServers" section of your `claude_desk
       "command": "npx",
       "args": [
         "-y",
-        "github:turbot/tailpipe-mcp"
+        "@turbot/tailpipe-mcp"
       ]
     }
   }
 }
 ```
 
-This will automatically use the Tailpipe CLI to discover your database. If you want to specify a database file path explicitly, you can add it as an additional argument:
+By default, this will use the Tailpipe CLI to discover your database. Make sure Tailpipe is installed and configured first.
+
+To connect to a specific database file instead, add the path to the args:
 
 ```json
 {
@@ -121,7 +128,7 @@ This will automatically use the Tailpipe CLI to discover your database. If you w
       "command": "npx",
       "args": [
         "-y",
-        "github:turbot/tailpipe-mcp",
+        "@turbot/tailpipe-mcp",
         "/path/to/your/tailpipe.db"
       ]
     }
@@ -129,92 +136,85 @@ This will automatically use the Tailpipe CLI to discover your database. If you w
 }
 ```
 
+Save the configuration file and restart Claude Desktop for the changes to take effect.
+
 ### Cursor
 
-To install the Tailpipe MCP server in Cursor:
+Open your Cursor MCP configuration file at `~/.cursor/mcp.json` and add the following configuration to the "mcpServers" section:
 
-1. Open your Cursor MCP configuration file:
-   ```sh
-   open ~/.cursor/mcp.json  # On macOS
-   # or
-   code ~/.cursor/mcp.json  # Using VS Code
-   ```
+```json
+{
+  "mcpServers": {
+    "tailpipe": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@turbot/tailpipe-mcp"
+      ]
+    }
+  }
+}
+```
 
-2. Add the following configuration to enable automatic database discovery using the Tailpipe CLI:
-   ```json
-   {
-     "mcpServers": {
-       "tailpipe": {
-         "name": "Tailpipe",
-         "description": "Query Tailpipe data",
-         "server": "github:turbot/tailpipe-mcp"
-       }
-     }
-   }
-   ```
+By default, this will use the Tailpipe CLI to discover your database. Make sure Tailpipe is installed and configured first.
 
-   Alternatively, if you want to specify a database path explicitly:
-   ```json
-   {
-     "mcpServers": {
-       "tailpipe": {
-         "name": "Tailpipe",
-         "description": "Query Tailpipe data",
-         "server": "github:turbot/tailpipe-mcp",
-         "args": ["/path/to/your/tailpipe.db"]
-       }
-     }
-   }
-   ```
+To connect to a specific database file instead, add the path to the args:
 
-3. Save the configuration file and restart Cursor for the changes to take effect.
+```json
+{
+  "mcpServers": {
+    "tailpipe": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@turbot/tailpipe-mcp",
+        "/path/to/your/tailpipe.db"
+      ]
+    }
+  }
+}
+```
 
-4. The Tailpipe MCP server will now be available in your Cursor environment.
+Save the configuration file and restart Cursor for the changes to take effect.
 
 ## Prompting Guide
 
 ### Best Practices
 
-The Tailpipe MCP includes a pre-built `best_practices` prompt. Running it before running your own prompts will teach the LLM how to work most effectively with Tailpipe, including:
+The Tailpipe MCP includes a pre-built `best_practices` prompt that teaches Claude how to work effectively with your cloud and security data. Running it before your own prompts will help Claude:
 
-- How to explore available data schemas and tables using tailpipe_table_list and tailpipe_table_show
-- When to use specific tables for different resource types
-- How to write efficient queries that follow Tailpipe conventions
-- Best practices for formatting and presenting results
+- Understand how to explore available data using the Tailpipe tools
+- Write efficient DuckDB SQL queries
+- Follow consistent formatting and style conventions
+- Work with data timestamps and freshness
 
 In Claude Desktop, you can load this prompt through the plug icon in the prompt window.
 
 ### Example Prompts
 
-Each prompt below is designed to work with Tailpipe's table structure, where each resource type (buckets, instances, etc.) has its own table.
+Each prompt below is designed to work with Tailpipe's table structure, where each data source has its own tables. Here are some examples focusing on AWS CloudTrail and cost data:
 
 ```
-List all tables in the aws schema
-```
-
-```
-What columns are in the aws_s3_bucket table?
+What tables are available for AWS CloudTrail data?
 ```
 
 ```
-Find S3 buckets that don't have encryption enabled
+Show me all S3 bucket creation events from CloudTrail in the last 24 hours
 ```
 
 ```
-What EC2 instances have public IPs and are in a public subnet?
+What were my top 10 AWS services by cost last month?
+```
+
+```
+Find any IAM users created outside working hours (9am-5pm) in the last week
 ```
 
 Remember to:
-- Ask about specific resource types (e.g., EC2 instances, S3 buckets, IAM users)
-- Be clear about which services or schemas you're interested in
-- Start with simple questions about one resource type
-- Add more complexity or conditions after seeing the initial results
-
-Claude will:
-- Choose the appropriate Tailpipe tables for your request
-- Write efficient SQL queries behind the scenes
-- Format the results in a clear, readable way
-- Provide insights and analysis based on your data
+- Be specific about the time period you're interested in
+- Mention the type of data you want to analyze (CloudTrail events, cost data, etc.)
+- Start with simple queries before adding complex conditions
+- Use natural language - Claude will handle the SQL translation
 
 ## Local Development
 
@@ -241,25 +241,7 @@ npm run build
 npm run watch
 ```
 
-5. To test locally:
-```sh
-# Run the main test (conversation with query testing)
-npm test
-
-# Test just the DuckDB connection
-npm run test:duckdb
-
-# Run a basic server test
-npm run test:simple
-
-# Set up for manual testing
-npm run test:setup
-
-# Clean up any leftover test files
-npm run clean:tests
-```
-
-6. To run the server:
+5. To run the server:
 
 The MCP server can be run in two ways:
 
@@ -292,7 +274,7 @@ Example using environment variables:
 TAILPIPE_MCP_DATABASE_PATH=/path/to/db.db TAILPIPE_MCP_LOG_LEVEL=DEBUG node dist/index.js
 ```
 
-7. To use your local development version with Claude Desktop, update your `claude_desktop_config.json`:
+6. To use your local development version with Claude Desktop, update your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
@@ -309,7 +291,7 @@ TAILPIPE_MCP_DATABASE_PATH=/path/to/db.db TAILPIPE_MCP_LOG_LEVEL=DEBUG node dist
 
 Replace `/path/to/your/workspace` with the absolute path to your local development directory. For example, if you cloned the repository to `~/src/tailpipe-mcp`, you would use `~/src/tailpipe-mcp/dist/index.js`.
 
-8. For local development with Cursor, update your `~/.cursor/mcp.json`:
+7. For local development with Cursor, update your `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
