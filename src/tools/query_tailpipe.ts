@@ -1,6 +1,7 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../services/logger.js";
 import { DatabaseService } from "../services/database.js";
+import { stringifyResponse } from '../utils/format.js';
 
 export const tool: Tool = {
   name: "query_tailpipe",
@@ -47,13 +48,13 @@ export const tool: Tool = {
       });
 
       return {
-        content: [{ type: "text", text: JSON.stringify(processedRows, null, 2) }],
+        content: [{ type: "text", text: stringifyResponse(processedRows) }],
         isError: false
       };
     } catch (error) {
       logger.error('Failed to execute query:', error instanceof Error ? error.message : String(error));
       return {
-        content: [{ type: "text", text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2) }],
+        content: [{ type: "text", text: stringifyResponse({ error: error instanceof Error ? error.message : String(error) }) }],
         isError: true
       };
     }

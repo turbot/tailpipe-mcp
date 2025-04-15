@@ -3,6 +3,7 @@ import { logger } from '../services/logger.js';
 import { getServerStartTime } from '../index.js';
 import { executeCommand } from '../utils/command.js';
 import type { Resource } from "../types/resource.js";
+import { stringifyResponse } from '../utils/format.js';
 
 export const resource: Resource = {
   uri: "tailpipe://status",
@@ -60,7 +61,7 @@ export const resource: Resource = {
         {
           uri: "tailpipe://status",
           mimeType: "application/json",
-          text: JSON.stringify(content, null, 2)
+          text: stringifyResponse(content)
         }
       ]
     };

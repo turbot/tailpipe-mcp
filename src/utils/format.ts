@@ -6,6 +6,15 @@ export interface DatabaseConnection {
   status: string;
 }
 
+/**
+ * Centralized function for stringifying MCP responses without indentation
+ * @param data The data to stringify
+ * @returns Stringified data without indentation
+ */
+export function stringifyResponse(data: unknown): string {
+  return JSON.stringify(data);
+}
+
 export function validateAndFormat(output: string, cmd: string, resourceType: string) {
   // Just validate it's valid JSON
   const details = JSON.parse(output);
@@ -13,12 +22,12 @@ export function validateAndFormat(output: string, cmd: string, resourceType: str
   return {
     content: [{
       type: "text",
-      text: JSON.stringify({
+      text: stringifyResponse({
         [resourceType]: details,
         debug: {
           command: cmd
         }
-      }, null, 2)
+      })
     }]
   };
 }
@@ -39,12 +48,12 @@ export function formatListResult<T>(data: T[], key: string, cmd: string): Promis
   return Promise.resolve({
     content: [{
       type: "text",
-      text: JSON.stringify({
+      text: stringifyResponse({
         [key]: data,
         debug: {
           command: cmd
         }
-      }, null, 2)
+      })
     }]
   });
 } 
