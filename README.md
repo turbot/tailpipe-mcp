@@ -38,46 +38,46 @@ You can load this prompt in Claude Desktop through the plug icon in the prompt w
 ### Tools
 
 Database Operations:
-- **query_tailpipe**
+- **tailpipe_query**
   - Run a read-only Tailpipe SQL query
   - Input: `sql` (string): The SQL query to execute
   
-- **reconnect_tailpipe**
+- **tailpipe_reconnect**
   - Reconnect to the database, optionally using a new database path
   - Optional input: `database_path` (string): New database path to connect to
 
 Data Structure Operations:
-- **partition_list**
+- **tailpipe_partition_list**
   - List all available Tailpipe partitions
   - No input parameters required
 
-- **partition_show**
+- **tailpipe_partition_show**
   - Show details of a specific Tailpipe partition
   - Input: `name` (string): Name of the partition to show details for
 
-- **table_list**
+- **tailpipe_table_list**
   - List all available Tailpipe tables
   - No input parameters required
 
-- **table_show**
+- **tailpipe_table_show**
   - Show details of a specific Tailpipe table
   - Input: `name` (string): Name of the table to show details for
 
 Plugin Operations:
-- **plugin_list**
+- **tailpipe_plugin_list**
   - List all available Tailpipe plugins
   - No input parameters required
 
-- **plugin_show**
+- **tailpipe_plugin_show**
   - Show details of a specific Tailpipe plugin
   - Input: `name` (string): Name of the plugin to show details for
 
 Source Operations:
-- **source_list**
+- **tailpipe_source_list**
   - List all available Tailpipe sources
   - No input parameters required
 
-- **source_show**
+- **tailpipe_source_show**
   - Show details of a specific Tailpipe source
   - Input: `name` (string): Name of the source to show details for
 
@@ -190,7 +190,7 @@ To install the Tailpipe MCP server in Cursor:
 
 The Tailpipe MCP includes a pre-built `best_practices` prompt. Running it before running your own prompts will teach the LLM how to work most effectively with Tailpipe, including:
 
-- How to explore available data schemas and tables
+- How to explore available data schemas and tables using tailpipe_table_list and tailpipe_table_show
 - When to use specific tables for different resource types
 - How to write efficient queries that follow Tailpipe conventions
 - Best practices for formatting and presenting results
