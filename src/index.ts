@@ -8,14 +8,22 @@ import { setupPromptHandlers, promptCapabilities } from "./prompts/index.js";
 import { setupResourceHandlers, resourceCapabilities } from "./resources/index.js";
 import { setupResourceTemplateHandlers, resourceTemplateCapabilities } from "./resourceTemplates/index.js";
 import { logger } from "./services/logger.js";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// Read package.json for server metadata
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
 
 // Server metadata
 const SERVER_INFO = {
   name: "tailpipe",
-  version: "0.1.0",
-  description: "Use Tailpipe to explore and query your cloud and security logs with SQL.",
-  vendor: "Turbot",
-  homepage: "https://github.com/turbot/tailpipe-mcp",
+  version: packageJson.version,
+  description: packageJson.description,
+  vendor: packageJson.author,
+  homepage: packageJson.homepage,
 } as const;
 
 // Parse command line arguments for database path
