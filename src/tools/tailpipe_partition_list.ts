@@ -33,7 +33,7 @@ function parsePartitions(output: string): Partition[] {
 
 export const tool: Tool = {
   name: "tailpipe_partition_list",
-  description: `List all Tailpipe partitions with simple statistics.`,
+  description: `List all Tailpipe partitions with their file counts and sizes.`,
   inputSchema: {
     type: "object",
     properties: {},

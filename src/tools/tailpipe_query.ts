@@ -5,12 +5,7 @@ import { stringifyResponse } from '../utils/format.js';
 
 export const tool: Tool = {
   name: "tailpipe_query",
-  description: `Query cloud and security logs with SQL.
-  
-  Queries are read-only and must use DuckDB SQL syntax. 
-
-  Use table_list and table_show to discover available tables and columns.
-  `,
+  description: `Execute read-only SQL queries against cloud and security logs using DuckDB syntax. Results are returned in JSON format. Before writing queries, you can explore available tables and their structures using the tailpipe_table_list and tailpipe_table_show commands.`,
   inputSchema: {
     type: "object",
     properties: {

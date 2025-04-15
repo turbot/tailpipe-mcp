@@ -7,7 +7,7 @@ import { buildTailpipeCommand } from "../utils/tailpipe.js";
 
 export const tool: Tool = {
   name: "tailpipe_connect",
-  description: "Refresh the Tailpipe database connection to get the latest data, or connect to a different database path.",
+  description: "Connect to a Tailpipe database, optionally specifying a new database path.",
   inputSchema: {
     type: "object",
     properties: {
