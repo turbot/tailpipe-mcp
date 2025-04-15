@@ -306,9 +306,7 @@ Replace `/path/to/your/workspace` with the absolute path to your local developme
 }
 ```
 
-## Testing with MCP Inspector
-
-The MCP Inspector is helpful for testing and debugging. To test your local development version:
+8. The MCP Inspector is helpful for testing and debugging. To test your local development version:
 
 ```sh
 npx @modelcontextprotocol/inspector dist/index.js
