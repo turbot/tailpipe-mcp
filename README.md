@@ -1,19 +1,14 @@
 # Tailpipe Model Context Protocol (MCP) Server
 
-Enable AI assistants like Claude to explore and query your Tailpipe data! This Model Context Protocol (MCP) server lets AI tools:
+Unlock the power of AI-driven log analysis with [Tailpipe](https://tailpipe.io)! This Model Context Protocol server seamlessly connects AI assistants like Claude to your cloud and SaaS logs, enabling natural language exploration and analysis of your entire data estate.
 
-- Browse your Tailpipe schemas and tables
-- Understand your data structure and relationships
-- Run SQL queries against your data
-- Provide insights and analysis based on your cloud and SaaS data
+Tailpipe MCP bridges AI assistants and your log data, allowing natural language:
+- Queries across CloudTrail, Kubernetes, and other cloud service logs
+- Security incident investigation and analysis
+- Performance and operational insights
+- Query development assistance
 
-Perfect for:
-- Getting AI help analyzing your cloud infrastructure
-- Having AI assist with Tailpipe query development
-- Enabling natural language interactions with your Tailpipe data
-- Exploring and analyzing your data with AI assistance
-
-Connects directly to your local Tailpipe database file, giving you AI access to all your cloud and SaaS data.
+Works with your local [Tailpipe](https://tailpipe.io/downloads) database files, providing safe, read-only access to all your cloud and SaaS log data.
 
 ## Capabilities
 
