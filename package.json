@@ -15,11 +15,27 @@
   ],
   "scripts": {
     "build": "tsc && shx chmod +x dist/index.js",
-    "prepare": "npm run build",
-    "watch": "tsc --watch",
     "clean": "rm -rf dist",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run clean && npm run build",
+    "watch": "tsc --watch",
     "start": "node dist/index.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ai",
+    "logs",
+    "mcp",
+    "mcp-server",
+    "security",
+    "tailpipe",
+    "turbot-pipes"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
     "@types/node": "^20.11.5",
