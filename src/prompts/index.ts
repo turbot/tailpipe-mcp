@@ -1,13 +1,10 @@
 import { ListPromptsRequestSchema, GetPromptRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { prompt as best_practices_prompt } from "./best_practices.js";
 import { logger } from '../services/logger.js';
 import type { Prompt } from "../types/prompt.js";
 
 // Register all available prompts
-const prompts: Prompt[] = [
-  best_practices_prompt
-];
+const prompts: Prompt[] = [];
 
 // Export prompts for server capabilities
 export const promptCapabilities = {

@@ -65,7 +65,7 @@ Save the configuration file and restart your AI assistant for the changes to tak
 
 ## Prompting Guide
 
-First, run the `best_practices` prompt included in the MCP server to teach your LLM how best to work with Tailpipe. Then, ask anything!
+Ask anything about your log data!
 
 Explore your log data:
 ```
@@ -151,16 +151,6 @@ Source Operations:
 - **tailpipe_source_show**
   - Get details for a specific Tailpipe source
   - Input: `name` (string): Name of the source to show details for
-
-### Prompts
-
-- **best_practices**
-  - Best practices for working with Tailpipe data
-  - Provides guidance on:
-    - Using tools to explore available data (tailpipe_table_list, tailpipe_table_show, etc.)
-    - SQL syntax and style conventions
-    - Data freshness and connection management
-    - Example workflow and queries
 
 ### Resources
 
