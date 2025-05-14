@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/turbot-tailpipe-mcp-badge.png)](https://mseep.ai/app/turbot-tailpipe-mcp)
+
 # Tailpipe Model Context Protocol (MCP) Server
 
 Unlock the power of AI-driven log analysis with [Tailpipe](https://tailpipe.io)! This Model Context Protocol server seamlessly connects AI assistants like Claude to your cloud and SaaS logs, enabling natural language exploration and analysis of your entire data estate.
