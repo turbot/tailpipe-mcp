@@ -8,7 +8,7 @@ Tailpipe MCP bridges AI assistants and your log data, allowing natural language:
 - Cost and performance insights
 - Query development assistance
 
-Works with your local [Tailpipe](https://tailpipe.io/downloads) database files, providing safe, read-only access to all your cloud and SaaS log data.
+Works with your local [Tailpipe](https://tailpipe.io/downloads) init SQL scripts, providing safe, read-only access to all your cloud and SaaS log data.
 
 ## Installation
 
@@ -35,9 +35,9 @@ Add Tailpipe MCP to your AI assistant's configuration file:
 }
 ```
 
-By default, this will use the Tailpipe CLI to discover your database. Make sure Tailpipe is installed and configured first.
+By default, this will use the Tailpipe CLI to discover your init SQL script. Make sure Tailpipe is installed and configured first.
 
-To connect to a specific database file instead, add the path to the args:
+To connect to a specific init SQL script instead, add the path to the args:
 
 ```json
 {
@@ -47,7 +47,7 @@ To connect to a specific database file instead, add the path to the args:
       "args": [
         "-y",
         "@turbot/tailpipe-mcp",
-        "/path/to/your/tailpipe.db"
+        "/path/to/your/tailpipe_init_YYYYMMDDHHMMSS.sql"
       ]
     }
   }
@@ -114,8 +114,8 @@ Database Operations:
   - Input: `sql` (string): The SQL query to execute
   
 - **tailpipe_connect**
-  - Refresh the Tailpipe database connection to get the latest data, or connect to a different database path
-  - Optional input: `database_path` (string): Database path to connect to. If not provided, refreshes the current connection.
+  - Initialize or refresh the DuckDB session from a Tailpipe init SQL script
+  - Optional input: `init_script_path` (string): Path to the init SQL script to use. If not provided, refreshes the current connection.
 
 Data Structure Operations:
 - **tailpipe_partition_list**
@@ -157,11 +157,11 @@ Source Operations:
 - **status**
   - Represents the current state of the Tailpipe connection
   - Properties include:
-    - Connected database path
+    - Init script path in use
     - Server configuration
     - Runtime environment
 
-This resource enables AI tools to check and verify the connection status to your Tailpipe database.
+This resource enables AI tools to check and verify the connection status to your Tailpipe session.
 
 ## Development
 
@@ -194,7 +194,7 @@ To test your local development build with AI tools that support MCP, update your
       "command": "node",
       "args": [
         "/absolute/path/to/tailpipe-mcp/dist/index.js",
-        "/path/to/your/tailpipe.db"
+        "/path/to/your/tailpipe_init_YYYYMMDDHHMMSS.sql"
       ]
     }
   }
@@ -210,7 +210,7 @@ npx @modelcontextprotocol/inspector dist/index.js
 
 The following environment variables can be used to configure the MCP server:
 
-- `TAILPIPE_MCP_DATABASE_PATH`: Specify the database path (alternative to command line argument)
+- `TAILPIPE_MCP_INIT_SCRIPT_PATH`: Specify the Tailpipe init SQL script path (alternative to command line argument)
 - `TAILPIPE_MCP_LOG_LEVEL`: Control logging verbosity (default: `info`)
   - `debug`: Show all messages (most verbose)
   - `info`: Show informational, warning, and error messages

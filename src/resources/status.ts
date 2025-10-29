@@ -9,12 +9,12 @@ export const resource: Resource = {
   uri: "tailpipe://status",
   name: "status",
   type: "Status",
-  description: "Server status information including database connection, Tailpipe version, and uptime.",
+  description: "Server status information including init script path, Tailpipe version, and uptime.",
   handler: async (db: DatabaseService): Promise<any> => {
     logger.debug('Handling status resource request');
     
-    // Get the database path from the DatabaseService
-    const dbPath = db.databasePath || 'Unknown';
+    // Get the init script path from the DatabaseService
+    const initScriptPath = db.initScriptPath || 'Unknown';
     
     // Get Tailpipe CLI version (when available)
     let tailpipeVersion = 'Not installed';
@@ -44,7 +44,7 @@ export const resource: Resource = {
     // Prepare the status response
     const content = {
       database: {
-        path: dbPath,
+        init_script_path: initScriptPath,
         connection_status: connectionStatus
       },
       tailpipe: {
