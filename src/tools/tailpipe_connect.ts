@@ -7,18 +7,18 @@ import { buildTailpipeCommand } from "../utils/tailpipe.js";
 
 export const tool: Tool = {
   name: "tailpipe_connect",
-  description: "Connect to a Tailpipe database, optionally specifying a new database path.",
+  description: "Initialize DuckDB using a Tailpipe init SQL script, optionally specifying a new init script path.",
   inputSchema: {
     type: "object",
     properties: {
-      database_path: {
+      init_script_path: {
         type: "string",
-        description: "Optional database path to connect to. If not provided, refreshes the current connection."
+        description: "Optional path to the Tailpipe init SQL script. If not provided, refreshes the current connection."
       }
     },
     additionalProperties: false
   },
-  handler: async (db: DatabaseService, args: { database_path?: string }) => {
+  handler: async (db: DatabaseService, args: { init_script_path?: string }) => {
     logger.debug('Executing connect_tailpipe tool');
 
     try {
@@ -27,11 +27,11 @@ export const tool: Tool = {
       await db.close();
       
       // Create a new database service instance
-      const newDb = await DatabaseService.create(args.database_path);
+      const newDb = await DatabaseService.create(args.init_script_path);
       
       // Update the current database service with the new config
       await db.setDatabaseConfig({
-        path: newDb.databasePath,
+        initScriptPath: newDb.initScriptPath,
         sourceType: newDb.sourceType
       });
       
@@ -41,12 +41,12 @@ export const tool: Tool = {
       const result = {
         connection: {
           success: true,
-          path: db.databasePath,
+          init_script_path: db.initScriptPath,
           source: db.sourceType === 'tailpipe' ? 'tailpipe CLI' : 'provided argument',
           status: "connected"
         },
         debug: {
-          command: buildTailpipeCommand(`connect ${args.database_path || ''}`)
+          command: buildTailpipeCommand(`connect ${args.init_script_path || ''}`)
         }
       };
       

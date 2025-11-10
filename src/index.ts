@@ -26,9 +26,9 @@ const SERVER_INFO = {
   homepage: packageJson.homepage,
 } as const;
 
-// Parse command line arguments for database path
+// Parse command line arguments for init script path
 const args = process.argv.slice(2);
-const providedDatabasePath = args[0] || process.env.TAILPIPE_MCP_DATABASE_PATH;
+const providedInitScriptPath = args[0] || process.env.TAILPIPE_MCP_INIT_SCRIPT_PATH;
 
 // Track server start time
 let serverStartTime: string;
@@ -76,7 +76,7 @@ async function startServer() {
     );
     
     // Initialize database connection
-    const db = await DatabaseService.create(providedDatabasePath);
+    const db = await DatabaseService.create(providedInitScriptPath);
     logger.info("Database connection initialized successfully");
     
     // Set up shutdown handlers

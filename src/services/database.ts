@@ -1,9 +1,10 @@
 import { execSync } from "child_process";
 import { resolve } from "path";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { logger } from "./logger.js";
 import duckdb from 'duckdb';
 import { executeCommand } from "../utils/command.js";
+import nodeSqlParser from "node-sql-parser";
 import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 // Define types for DuckDB callback parameters
@@ -13,14 +14,45 @@ type DuckDBRow = Record<string, any>;
 export type DatabaseSourceType = 'cli-arg' | 'tailpipe';
 
 export interface DatabaseConfig {
-  path: string;
+  initScriptPath: string;
   sourceType: DatabaseSourceType;
 }
 
-export interface DatabasePathInfo {
-  path: string;
+export interface InitScriptInfo {
+  initScriptPath: string;
   source: string;
   sourceType: DatabaseSourceType;
+}
+
+const { Parser } = nodeSqlParser as typeof import("node-sql-parser");
+const sqlParser = new Parser();
+const parserOptions = { database: 'Postgresql' as const };
+
+export function parseSqlStatements(script: string): string[] {
+  const trimmedScript = script.trim();
+
+  if (!trimmedScript) {
+    return [];
+  }
+
+  try {
+    const ast = sqlParser.astify(trimmedScript, parserOptions);
+    const astArray = Array.isArray(ast) ? ast : [ast];
+
+    return astArray
+      .map(statementAst => sqlParser.sqlify(statementAst, parserOptions).trim())
+      .filter(statement => statement.length > 0);
+  } catch (error) {
+    logger.warn(
+      "Failed to parse init script with SQL parser, falling back to regex split",
+      error instanceof Error ? error.message : String(error)
+    );
+
+    return trimmedScript
+      .split(/;\s*\n|;\s*$/m)
+      .map(statement => statement.trim())
+      .filter(statement => statement.length > 0);
+  }
 }
 
 export class DatabaseService {
@@ -33,8 +65,8 @@ export class DatabaseService {
     this.config = config;
   }
 
-  get databasePath(): string {
-    return this.config.path;
+  get initScriptPath(): string {
+    return this.config.initScriptPath;
   }
 
   get sourceType(): DatabaseSourceType {
@@ -44,14 +76,14 @@ export class DatabaseService {
   /**
    * Create a new DatabaseService instance and initialize the connection
    */
-  static async create(providedPath?: string): Promise<DatabaseService> {
-    const pathInfo = await DatabaseService.resolveDatabasePath(providedPath);
-    logger.info(`Database path resolved to: ${pathInfo.path}`);
-    logger.info(`Database path source type: ${pathInfo.sourceType}`);
+  static async create(providedInitScriptPath?: string): Promise<DatabaseService> {
+    const scriptInfo = await DatabaseService.resolveInitScriptPath(providedInitScriptPath);
+    logger.info(`Init script path resolved to: ${scriptInfo.initScriptPath}`);
+    logger.info(`Init script source type: ${scriptInfo.sourceType}`);
 
     const service = new DatabaseService({
-      path: pathInfo.path,
-      sourceType: pathInfo.sourceType
+      initScriptPath: scriptInfo.initScriptPath,
+      sourceType: scriptInfo.sourceType
     });
 
     await service.initialize();
@@ -61,31 +93,31 @@ export class DatabaseService {
   }
 
   /**
-   * Get database path from various sources in order of precedence:
+   * Get init script path from various sources in order of precedence:
    * 1. Provided path argument
-   * 2. Environment variable TAILPIPE_MCP_DATABASE_PATH
+   * 2. Environment variable TAILPIPE_MCP_INIT_SCRIPT_PATH
    * 3. Command line argument
    * 4. Tailpipe CLI
    */
-  private static async resolveDatabasePath(providedPath?: string): Promise<DatabasePathInfo> {
+  private static async resolveInitScriptPath(providedPath?: string): Promise<InitScriptInfo> {
     // Check explicit path argument
-    const pathToUse = providedPath || process.env.TAILPIPE_MCP_DATABASE_PATH || (process.argv.length > 2 ? process.argv[2] : undefined);
-    
+    const pathToUse = providedPath || process.env.TAILPIPE_MCP_INIT_SCRIPT_PATH || (process.argv.length > 2 ? process.argv[2] : undefined);
+
     if (pathToUse) {
       const source = providedPath ? 'provided argument' :
-                    process.env.TAILPIPE_MCP_DATABASE_PATH ? 'environment variable' :
+                    process.env.TAILPIPE_MCP_INIT_SCRIPT_PATH ? 'environment variable' :
                     'command line argument';
-      
-      logger.info(`Database path provided via ${source}: ${pathToUse}`);
+
+      logger.info(`Init script path provided via ${source}: ${pathToUse}`);
       const resolvedPath = resolve(pathToUse);
-      logger.info(`Resolved database path to: ${resolvedPath}`);
-      
+      logger.info(`Resolved init script path to: ${resolvedPath}`);
+
       if (!existsSync(resolvedPath)) {
-        throw new Error(`Database file does not exist: ${resolvedPath}`);
+        throw new Error(`Init script file does not exist: ${resolvedPath}`);
       }
-      
+
       return {
-        path: resolvedPath,
+        initScriptPath: resolvedPath,
         source,
         sourceType: 'cli-arg'
       };
@@ -103,21 +135,21 @@ export class DatabaseService {
       const output = executeCommand(cmd, { env: getTailpipeEnv() });
       
       const result = JSON.parse(output);
-      
-      if (!result?.database_filepath) {
+
+      if (!result?.init_script_path) {
         logger.error('Tailpipe connect output JSON:', JSON.stringify(result));
-        throw new Error('Tailpipe connect output missing database_filepath field');
+        throw new Error('Tailpipe connect output missing init_script_path field');
       }
-      
-      const path = resolve(result.database_filepath);
-      logger.info(`Using Tailpipe database path: ${path}`);
-      
-      if (!existsSync(path)) {
-        throw new Error(`Tailpipe database file does not exist: ${path}`);
+
+      const scriptPath = resolve(result.init_script_path);
+      logger.info(`Using Tailpipe init script path: ${scriptPath}`);
+
+      if (!existsSync(scriptPath)) {
+        throw new Error(`Tailpipe init script file does not exist: ${scriptPath}`);
       }
-      
+
       return {
-        path,
+        initScriptPath: scriptPath,
         source: 'tailpipe CLI connection',
         sourceType: 'tailpipe'
       };
@@ -173,12 +205,26 @@ export class DatabaseService {
     await this.close();
       
     try {
-      logger.debug(`Connecting to database: ${this.config.path}`);
-      this.db = new duckdb.Database(this.config.path, { access_mode: 'READ_ONLY' });
+      logger.debug(`Initializing DuckDB with init script: ${this.config.initScriptPath}`);
+      // Use in-memory database and execute init script to bootstrap session
+      this.db = new duckdb.Database(':memory:');
       this.connection = this.db.connect();
+
+      // Read and execute the init script sequentially
+      const script = readFileSync(this.config.initScriptPath, 'utf8');
+      const statements = parseSqlStatements(script);
+
+      for (const statement of statements) {
+        await new Promise<void>((resolve, reject) => {
+          this.connection!.run(statement, (err: DuckDBError) => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to connect to database: ${message}`);
+      logger.error(`Failed to initialize DuckDB with init script: ${message}`);
       throw error;
     }
   }
