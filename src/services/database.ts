@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "fs";
 import { logger } from "./logger.js";
 import duckdb from 'duckdb';
 import { executeCommand } from "../utils/command.js";
+import nodeSqlParser from "node-sql-parser";
 import { buildTailpipeCommand, getTailpipeEnv } from "../utils/tailpipe.js";
 
 // Define types for DuckDB callback parameters
@@ -21,6 +22,37 @@ export interface InitScriptInfo {
   initScriptPath: string;
   source: string;
   sourceType: DatabaseSourceType;
+}
+
+const { Parser } = nodeSqlParser as typeof import("node-sql-parser");
+const sqlParser = new Parser();
+const parserOptions = { database: 'Postgresql' as const };
+
+export function parseSqlStatements(script: string): string[] {
+  const trimmedScript = script.trim();
+
+  if (!trimmedScript) {
+    return [];
+  }
+
+  try {
+    const ast = sqlParser.astify(trimmedScript, parserOptions);
+    const astArray = Array.isArray(ast) ? ast : [ast];
+
+    return astArray
+      .map(statementAst => sqlParser.sqlify(statementAst, parserOptions).trim())
+      .filter(statement => statement.length > 0);
+  } catch (error) {
+    logger.warn(
+      "Failed to parse init script with SQL parser, falling back to regex split",
+      error instanceof Error ? error.message : String(error)
+    );
+
+    return trimmedScript
+      .split(/;\s*\n|;\s*$/m)
+      .map(statement => statement.trim())
+      .filter(statement => statement.length > 0);
+  }
 }
 
 export class DatabaseService {
@@ -180,10 +212,7 @@ export class DatabaseService {
 
       // Read and execute the init script sequentially
       const script = readFileSync(this.config.initScriptPath, 'utf8');
-      const statements = script
-        .split(/;\s*\n|;\s*$/m)
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
+      const statements = parseSqlStatements(script);
 
       for (const statement of statements) {
         await new Promise<void>((resolve, reject) => {
