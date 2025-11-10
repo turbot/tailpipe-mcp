@@ -9,15 +9,15 @@ const fixturesDir = join(__dirname, "..", "fixtures", "init-scripts");
 describe("MCP server startup", () => {
   const originalArgv = process.argv.slice();
   const loggerMock = {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: jest.fn<(...args: any[]) => void>(),
+    debug: jest.fn<(...args: any[]) => void>(),
+    warn: jest.fn<(...args: any[]) => void>(),
+    error: jest.fn<(...args: any[]) => void>()
   };
 
-  const connectMock = jest.fn();
-  const createMock = jest.fn();
-  const closeMock = jest.fn().mockResolvedValue(undefined);
+  const connectMock = jest.fn<(...args: any[]) => Promise<void>>();
+  const createMock = jest.fn<(path?: string) => Promise<any>>();
+  const closeMock = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 
   beforeAll(() => {
     process.env.TAILPIPE_MCP_LOG_LEVEL = "error";

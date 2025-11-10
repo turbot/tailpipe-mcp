@@ -3,6 +3,8 @@ import { dirname, join } from "path";
 import { DatabaseService } from "../../src/services/database.js";
 import { tool as tailpipeQuery } from "../../src/tools/tailpipe_query.js";
 
+const handler = tailpipeQuery.handler as (db: any, args: { sql: string }) => Promise<any>;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const fixturesDir = join(__dirname, "..", "fixtures", "init-scripts");
@@ -20,7 +22,7 @@ describe("Tool integration with DatabaseService", () => {
     const scriptPath = join(fixturesDir, "simple.sql");
     const service = await DatabaseService.create(scriptPath);
 
-    const result = await tailpipeQuery.handler(service, {
+    const result = await handler(service, {
       sql: "SELECT id, name FROM simple_table ORDER BY id"
     });
 

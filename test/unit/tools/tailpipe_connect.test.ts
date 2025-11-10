@@ -1,13 +1,18 @@
 import { jest } from "@jest/globals";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+
+type LoggerFn = (...args: any[]) => void;
+type CreateFn = (path?: string) => Promise<any>;
+type FormatErrorFn = (error: unknown, context?: string) => any;
 
 const loggerMock = {
-  debug: jest.fn(),
-  info: jest.fn(),
-  error: jest.fn()
+  debug: jest.fn<LoggerFn>(),
+  info: jest.fn<LoggerFn>(),
+  error: jest.fn<LoggerFn>()
 };
 
-const createMock = jest.fn();
-const formatCommandErrorMock = jest.fn();
+const createMock = jest.fn<CreateFn>();
+const formatCommandErrorMock = jest.fn<FormatErrorFn>();
 
 async function loadTool() {
   jest.resetModules();
@@ -36,25 +41,28 @@ async function loadTool() {
 
 describe("tailpipe_connect tool", () => {
   it("refreshes the database connection with a new script", async () => {
-    const closeNewDb = jest.fn().mockResolvedValue(undefined);
-    const { tool } = await loadTool();
+    const closeNewDb = jest.fn(async () => undefined);
+    const { tool } = (await loadTool()) as { tool: Tool };
+    const handler = tool.handler as unknown as (db: unknown, args: unknown) => Promise<any>;
     createMock.mockResolvedValue({
       initScriptPath: "/tmp/new.sql",
       sourceType: "tailpipe",
-      close: closeNewDb
-    });
+      close: closeNewDb,
+      setDatabaseConfig: jest.fn(async () => undefined),
+      executeQuery: jest.fn()
+    } as any);
 
     const db = {
       initScriptPath: "/tmp/old.sql",
       sourceType: "cli-arg",
-      close: jest.fn().mockResolvedValue(undefined),
-      setDatabaseConfig: jest.fn().mockImplementation(async (config: { initScriptPath: string; sourceType: string }) => {
+      close: jest.fn(async () => undefined),
+      setDatabaseConfig: jest.fn(async (config: { initScriptPath: string; sourceType: string }) => {
         db.initScriptPath = config.initScriptPath;
         db.sourceType = config.sourceType as any;
       })
     };
 
-    const result = await tool.handler(db as any, { init_script_path: "/tmp/request.sql" });
+    const result = await handler(db as any, { init_script_path: "/tmp/request.sql" });
 
     expect(db.close).toHaveBeenCalledTimes(1);
     expect(createMock).toHaveBeenCalledWith("/tmp/request.sql");
@@ -75,17 +83,18 @@ describe("tailpipe_connect tool", () => {
 
   it("delegates error formatting when initialization fails", async () => {
     const failure = new Error("create failed");
-    const { tool } = await loadTool();
+    const { tool } = (await loadTool()) as { tool: Tool };
+    const handler = tool.handler as unknown as (db: unknown, args: unknown) => Promise<any>;
     createMock.mockRejectedValue(failure);
     formatCommandErrorMock.mockReturnValue({ isError: true, content: [] });
     const db = {
       initScriptPath: "/tmp/old.sql",
       sourceType: "cli-arg",
-      close: jest.fn().mockResolvedValue(undefined),
-      setDatabaseConfig: jest.fn().mockResolvedValue(undefined)
+      close: jest.fn(async () => undefined),
+      setDatabaseConfig: jest.fn(async () => undefined)
     };
 
-    const result = await tool.handler(db as any, { init_script_path: "/tmp/new.sql" });
+    const result = await handler(db as any, { init_script_path: "/tmp/new.sql" });
 
     expect(formatCommandErrorMock).toHaveBeenCalledWith(failure, "connect_tailpipe");
     expect(result).toEqual({ isError: true, content: [] });
